@@ -178,4 +178,125 @@ export function registerOpportunitiesTools(server: McpServer, env: Env) {
       }
     }
   );
+
+  // ========== PIPELINE MANAGEMENT ==========
+
+  server.tool(
+    "ghl_create_pipeline",
+    "Create a new sales pipeline.",
+    {
+      name: z.string().describe("Pipeline name"),
+      stages: z.array(z.record(z.any())).optional().describe("Pipeline stages"),
+      locationId: z.string().optional().describe("Target location"),
+    },
+    async (args) => {
+      try {
+        const client = await resolveClient(env, args.locationId);
+        const result = await client.opportunities.createPipeline(args);
+        return ok(`Pipeline created!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_update_pipeline",
+    "Update an existing pipeline.",
+    {
+      pipelineId: z.string().describe("Pipeline ID"),
+      name: z.string().optional().describe("Updated pipeline name"),
+      stages: z.array(z.record(z.any())).optional().describe("Updated pipeline stages"),
+      data: z.record(z.any()).optional().describe("Additional pipeline data"),
+    },
+    async ({ pipelineId, ...data }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.opportunities.updatePipeline(pipelineId, data);
+        return ok(`Pipeline updated!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_delete_pipeline",
+    "Delete a pipeline by ID. WARNING: This cannot be undone.",
+    {
+      pipelineId: z.string().describe("Pipeline ID"),
+    },
+    async ({ pipelineId }) => {
+      try {
+        const client = await resolveClient(env);
+        await client.opportunities.deletePipeline(pipelineId);
+        return ok(`Pipeline ${pipelineId} deleted.`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  // ========== UPSERT OPPORTUNITY ==========
+
+  server.tool(
+    "ghl_upsert_opportunity",
+    "Create or update an opportunity. Matches by pipeline and contact — creates if not found, updates if found.",
+    {
+      name: z.string().describe("Opportunity name"),
+      pipelineId: z.string().describe("Pipeline ID"),
+      pipelineStageId: z.string().describe("Pipeline stage ID"),
+      contactId: z.string().optional().describe("Associated contact ID"),
+      value: z.number().optional().describe("Deal value"),
+      status: z.string().optional().describe("Status"),
+      locationId: z.string().optional().describe("Target location"),
+    },
+    async (args) => {
+      try {
+        const client = await resolveClient(env, args.locationId);
+        const result = await client.opportunities.upsertOpportunity(args);
+        return ok(`Opportunity upserted!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  // ========== OPPORTUNITY FOLLOWERS ==========
+
+  server.tool(
+    "ghl_add_opportunity_followers",
+    "Add followers to an opportunity.",
+    {
+      opportunityId: z.string().describe("Opportunity ID"),
+      followers: z.array(z.string()).describe("User IDs to add as followers"),
+    },
+    async ({ opportunityId, followers }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.opportunities.addOpportunityFollowers(opportunityId, { followers });
+        return ok(`Followers added!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_remove_opportunity_followers",
+    "Remove followers from an opportunity.",
+    {
+      opportunityId: z.string().describe("Opportunity ID"),
+      followers: z.array(z.string()).describe("User IDs to remove as followers"),
+    },
+    async ({ opportunityId, followers }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.opportunities.removeOpportunityFollowers(opportunityId, { followers });
+        return ok(`Followers removed!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
 }

@@ -384,4 +384,176 @@ export function registerContactsTools(server: McpServer, env: Env) {
       }
     }
   );
+
+  // ========== FIND DUPLICATE CONTACTS ==========
+
+  server.tool(
+    "ghl_find_duplicate_contacts",
+    "Search for duplicate contacts in a location. Matches by email, phone, or name.",
+    {
+      locationId: z.string().optional().describe("Target location"),
+      email: z.string().optional().describe("Email to check for duplicates"),
+      phone: z.string().optional().describe("Phone to check for duplicates"),
+      firstName: z.string().optional().describe("First name to match"),
+      lastName: z.string().optional().describe("Last name to match"),
+    },
+    async ({ locationId, ...params }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        const result = await client.contacts.findDuplicateContacts(locationId, params);
+        return ok(`Duplicate contact search result:\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  // ========== LIST CONTACTS ==========
+
+  server.tool(
+    "ghl_list_contacts",
+    "List contacts in a location with optional filters.",
+    {
+      locationId: z.string().optional().describe("Target location"),
+      limit: z.number().optional().describe("Max results"),
+      startAfterId: z.string().optional().describe("Cursor for pagination"),
+      query: z.string().optional().describe("Search query"),
+    },
+    async ({ locationId, ...params }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        const result = await client.contacts.listContacts(locationId, params);
+        const contacts = result.contacts || [];
+        if (contacts.length === 0) return ok("No contacts found.");
+        const summary = contacts.map((c: any) => ({
+          id: c.id,
+          name: `${c.firstName || ""} ${c.lastName || ""}`.trim() || c.name || "N/A",
+          email: c.email || "N/A",
+          phone: c.phone || "N/A",
+          tags: c.tags || [],
+          dateAdded: c.dateAdded,
+        }));
+        return ok(`${contacts.length} contact(s):\n\n${JSON.stringify(summary, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  // ========== GET CONTACTS BY BUSINESS ==========
+
+  server.tool(
+    "ghl_get_contacts_by_business",
+    "Get all contacts associated with a specific business.",
+    { businessId: z.string().describe("Business ID") },
+    async ({ businessId }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.contacts.getContactsByBusiness(businessId);
+        return ok(JSON.stringify(result, null, 2));
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  // ========== BULK UPDATE TAGS ==========
+
+  server.tool(
+    "ghl_bulk_update_contact_tags",
+    "Bulk add or remove tags from multiple contacts.",
+    {
+      type: z.enum(["add", "remove"]).describe("Whether to add or remove tags"),
+      contactIds: z.array(z.string()).describe("List of contact IDs"),
+      tags: z.array(z.string()).describe("Tags to add or remove"),
+      locationId: z.string().optional().describe("Target location"),
+    },
+    async ({ type, contactIds, tags, locationId }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        const result = await client.contacts.bulkUpdateTags(type, { contactIds, tags, locationId: locationId || client.locationId });
+        return ok(`Bulk tag ${type} complete!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  // ========== CONTACT FOLLOWERS ==========
+
+  server.tool(
+    "ghl_add_contact_followers",
+    "Add followers to a contact.",
+    {
+      contactId: z.string().describe("Contact ID"),
+      followers: z.array(z.string()).describe("User IDs to add as followers"),
+    },
+    async ({ contactId, followers }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.contacts.addContactFollowers(contactId, { followers });
+        return ok(`Followers added!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_remove_contact_followers",
+    "Remove followers from a contact.",
+    {
+      contactId: z.string().describe("Contact ID"),
+      followers: z.array(z.string()).describe("User IDs to remove as followers"),
+    },
+    async ({ contactId, followers }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.contacts.removeContactFollowers(contactId, { followers });
+        return ok(`Followers removed!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  // ========== MERGE DUPLICATE CONTACTS ==========
+
+  server.tool(
+    "ghl_merge_duplicate_contacts",
+    "Merge duplicate contacts into a single contact record.",
+    {
+      data: z.record(z.any()).describe("Merge data (contactIds, primaryContactId, etc.)"),
+    },
+    async ({ data }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.contacts.mergeDuplicateContacts(data);
+        return ok(`Contacts merged!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  // ========== UPDATE TASK COMPLETED ==========
+
+  server.tool(
+    "ghl_update_task_completed",
+    "Mark a contact task as completed or not completed.",
+    {
+      contactId: z.string().describe("Contact ID"),
+      taskId: z.string().describe("Task ID"),
+      completed: z.boolean().describe("Whether the task is completed"),
+    },
+    async ({ contactId, taskId, completed }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.contacts.updateTaskCompleted(contactId, taskId, { completed });
+        return ok(`Task completion updated!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
 }

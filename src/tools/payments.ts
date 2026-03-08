@@ -195,11 +195,7 @@ export function registerPaymentsTools(server: McpServer, env: Env) {
     async ({ locationId }) => {
       try {
         const client = await resolveClient(env, locationId);
-        const result = await client.payments.generateInvoiceNumber(
-          client.apiKey,
-          locationId || client.locationId,
-          "location"
-        );
+        const result = await client.payments.generateInvoiceNumber(locationId);
         return ok(JSON.stringify(result, null, 2));
       } catch (e: any) {
         return err(e);
@@ -216,7 +212,7 @@ export function registerPaymentsTools(server: McpServer, env: Env) {
     async ({ body }) => {
       try {
         const client = await resolveClient(env);
-        const result = await client.payments.createEstimate(client.apiKey, body);
+        const result = await client.payments.createEstimate(body);
         return ok(`Estimate created!\n\n${JSON.stringify(result, null, 2)}`);
       } catch (e: any) {
         return err(e);
@@ -235,12 +231,7 @@ export function registerPaymentsTools(server: McpServer, env: Env) {
     async ({ locationId, limit, offset }) => {
       try {
         const client = await resolveClient(env, locationId);
-        const result = await client.payments.listEstimates(
-          client.apiKey,
-          locationId || client.locationId,
-          "location",
-          { limit, offset }
-        );
+        const result = await client.payments.listEstimates(locationId, { limit, offset });
         return ok(JSON.stringify(result, null, 2));
       } catch (e: any) {
         return err(e);
@@ -258,7 +249,7 @@ export function registerPaymentsTools(server: McpServer, env: Env) {
     async ({ estimateId, body }) => {
       try {
         const client = await resolveClient(env);
-        const result = await client.payments.sendEstimate(client.apiKey, estimateId, body);
+        const result = await client.payments.sendEstimate(estimateId, body);
         return ok(`Estimate sent!\n\n${JSON.stringify(result, null, 2)}`);
       } catch (e: any) {
         return err(e);
@@ -275,11 +266,7 @@ export function registerPaymentsTools(server: McpServer, env: Env) {
     async ({ locationId }) => {
       try {
         const client = await resolveClient(env, locationId);
-        const result = await client.payments.listInvoiceSchedules(
-          client.apiKey,
-          locationId || client.locationId,
-          "location"
-        );
+        const result = await client.payments.listInvoiceSchedules(locationId);
         return ok(JSON.stringify(result, null, 2));
       } catch (e: any) {
         return err(e);
@@ -296,7 +283,7 @@ export function registerPaymentsTools(server: McpServer, env: Env) {
     async ({ body }) => {
       try {
         const client = await resolveClient(env);
-        const result = await client.payments.createInvoiceSchedule(client.apiKey, body);
+        const result = await client.payments.createInvoiceSchedule(body);
         return ok(`Invoice schedule created!\n\n${JSON.stringify(result, null, 2)}`);
       } catch (e: any) {
         return err(e);
@@ -313,11 +300,7 @@ export function registerPaymentsTools(server: McpServer, env: Env) {
     async ({ locationId }) => {
       try {
         const client = await resolveClient(env, locationId);
-        const result = await client.payments.listInvoiceTemplates(
-          client.apiKey,
-          locationId || client.locationId,
-          "location"
-        );
+        const result = await client.payments.listInvoiceTemplates(locationId);
         return ok(JSON.stringify(result, null, 2));
       } catch (e: any) {
         return err(e);
@@ -334,7 +317,7 @@ export function registerPaymentsTools(server: McpServer, env: Env) {
     async ({ body }) => {
       try {
         const client = await resolveClient(env);
-        const result = await client.payments.createText2Pay(client.apiKey, body);
+        const result = await client.payments.createText2Pay(body);
         return ok(`Text-to-pay invoice created!\n\n${JSON.stringify(result, null, 2)}`);
       } catch (e: any) {
         return err(e);
@@ -413,12 +396,7 @@ export function registerPaymentsTools(server: McpServer, env: Env) {
     async ({ orderId, locationId }) => {
       try {
         const client = await resolveClient(env, locationId);
-        const result = await client.payments.getOrderFulfillments(
-          client.apiKey,
-          orderId,
-          locationId || client.locationId,
-          "location"
-        );
+        const result = await client.payments.getOrderFulfillments(orderId, locationId);
         return ok(JSON.stringify(result, null, 2));
       } catch (e: any) {
         return err(e);
@@ -436,7 +414,7 @@ export function registerPaymentsTools(server: McpServer, env: Env) {
     async ({ orderId, body }) => {
       try {
         const client = await resolveClient(env);
-        const result = await client.payments.createOrderFulfillment(client.apiKey, orderId, body);
+        const result = await client.payments.createOrderFulfillment(orderId, body);
         return ok(`Order fulfillment created!\n\n${JSON.stringify(result, null, 2)}`);
       } catch (e: any) {
         return err(e);
@@ -512,12 +490,7 @@ export function registerPaymentsTools(server: McpServer, env: Env) {
     async ({ transactionId, locationId }) => {
       try {
         const client = await resolveClient(env, locationId);
-        const result = await client.payments.getTransaction(
-          client.apiKey,
-          transactionId,
-          locationId || client.locationId,
-          "location"
-        );
+        const result = await client.payments.getTransaction(transactionId, locationId);
         return ok(JSON.stringify(result, null, 2));
       } catch (e: any) {
         return err(e);
@@ -584,6 +557,28 @@ export function registerPaymentsTools(server: McpServer, env: Env) {
   );
 
   // ==========================================================
+  // SUBSCRIPTIONS - CANCEL
+  // ==========================================================
+
+  server.tool(
+    "ghl_cancel_subscription",
+    "Cancel an active subscription.",
+    {
+      subscriptionId: z.string().describe("Subscription ID"),
+      data: z.record(z.any()).optional().describe("Cancellation data (reason, etc.)"),
+    },
+    async ({ subscriptionId, data }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.payments.cancelSubscription(subscriptionId, data || {});
+        return ok(`Subscription cancelled!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  // ==========================================================
   // STORE / SHIPPING
   // ==========================================================
 
@@ -596,11 +591,7 @@ export function registerPaymentsTools(server: McpServer, env: Env) {
     async ({ locationId }) => {
       try {
         const client = await resolveClient(env, locationId);
-        const result = await client.payments.getStoreSettings(
-          client.apiKey,
-          locationId || client.locationId,
-          "location"
-        );
+        const result = await client.payments.getStoreSettings(locationId);
         return ok(JSON.stringify(result, null, 2));
       } catch (e: any) {
         return err(e);
@@ -617,11 +608,7 @@ export function registerPaymentsTools(server: McpServer, env: Env) {
     async ({ locationId }) => {
       try {
         const client = await resolveClient(env, locationId);
-        const result = await client.payments.listShippingCarriers(
-          client.apiKey,
-          locationId || client.locationId,
-          "location"
-        );
+        const result = await client.payments.listShippingCarriers(locationId);
         return ok(JSON.stringify(result, null, 2));
       } catch (e: any) {
         return err(e);
@@ -638,11 +625,7 @@ export function registerPaymentsTools(server: McpServer, env: Env) {
     async ({ locationId }) => {
       try {
         const client = await resolveClient(env, locationId);
-        const result = await client.payments.listShippingZones(
-          client.apiKey,
-          locationId || client.locationId,
-          "location"
-        );
+        const result = await client.payments.listShippingZones(locationId);
         return ok(JSON.stringify(result, null, 2));
       } catch (e: any) {
         return err(e);
@@ -659,7 +642,7 @@ export function registerPaymentsTools(server: McpServer, env: Env) {
     async ({ body }) => {
       try {
         const client = await resolveClient(env);
-        const result = await client.payments.createShippingCarrier(client.apiKey, body);
+        const result = await client.payments.createShippingCarrier(body);
         return ok(`Shipping carrier created!\n\n${JSON.stringify(result, null, 2)}`);
       } catch (e: any) {
         return err(e);
@@ -676,7 +659,7 @@ export function registerPaymentsTools(server: McpServer, env: Env) {
     async ({ body }) => {
       try {
         const client = await resolveClient(env);
-        const result = await client.payments.createShippingZone(client.apiKey, body);
+        const result = await client.payments.createShippingZone(body);
         return ok(`Shipping zone created!\n\n${JSON.stringify(result, null, 2)}`);
       } catch (e: any) {
         return err(e);
@@ -693,7 +676,7 @@ export function registerPaymentsTools(server: McpServer, env: Env) {
     async ({ body }) => {
       try {
         const client = await resolveClient(env);
-        const result = await client.payments.updateStoreSettings(client.apiKey, body);
+        const result = await client.payments.updateStoreSettings(body);
         return ok(`Store settings updated!\n\n${JSON.stringify(result, null, 2)}`);
       } catch (e: any) {
         return err(e);
@@ -711,12 +694,7 @@ export function registerPaymentsTools(server: McpServer, env: Env) {
     async ({ shippingZoneId, locationId }) => {
       try {
         const client = await resolveClient(env, locationId);
-        const result = await client.payments.listShippingRates(
-          client.apiKey,
-          shippingZoneId,
-          locationId || client.locationId,
-          "location"
-        );
+        const result = await client.payments.listShippingRates(shippingZoneId, locationId);
         return ok(JSON.stringify(result, null, 2));
       } catch (e: any) {
         return err(e);
@@ -737,11 +715,7 @@ export function registerPaymentsTools(server: McpServer, env: Env) {
     async ({ locationId }) => {
       try {
         const client = await resolveClient(env, locationId);
-        const result = await client.payments.listCoupons(
-          client.apiKey,
-          locationId || client.locationId,
-          "location"
-        );
+        const result = await client.payments.listCoupons(locationId);
         return ok(JSON.stringify(result, null, 2));
       } catch (e: any) {
         return err(e);
@@ -758,8 +732,522 @@ export function registerPaymentsTools(server: McpServer, env: Env) {
     async ({ body }) => {
       try {
         const client = await resolveClient(env);
-        const result = await client.payments.createCoupon(client.apiKey, body);
+        const result = await client.payments.createCoupon(body);
         return ok(`Coupon created!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_get_coupon",
+    "Get a specific coupon by ID.",
+    {
+      couponId: z.string().describe("Coupon ID"),
+      locationId: z.string().optional().describe("Target location"),
+    },
+    async ({ couponId, locationId }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        const result = await client.payments.getCoupon(couponId, locationId);
+        return ok(JSON.stringify(result, null, 2));
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_update_coupon",
+    "Update an existing coupon.",
+    {
+      couponId: z.string().describe("Coupon ID"),
+      body: z.record(z.any()).describe("Updated coupon data"),
+    },
+    async ({ couponId, body }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.payments.updateCoupon(couponId, body);
+        return ok(`Coupon updated!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_delete_coupon",
+    "Delete a coupon by ID.",
+    {
+      couponId: z.string().describe("Coupon ID"),
+      locationId: z.string().optional().describe("Target location"),
+    },
+    async ({ couponId, locationId }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        await client.payments.deleteCoupon(couponId, locationId);
+        return ok(`Coupon ${couponId} deleted.`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  // ==========================================================
+  // INVOICE TEMPLATES (expanded)
+  // ==========================================================
+
+  server.tool(
+    "ghl_get_invoice_template",
+    "Get a specific invoice template by ID.",
+    {
+      templateId: z.string().describe("Invoice template ID"),
+      locationId: z.string().optional().describe("Target location"),
+    },
+    async ({ templateId, locationId }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        const result = await client.payments.getInvoiceTemplate(templateId, locationId);
+        return ok(JSON.stringify(result, null, 2));
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_create_invoice_template",
+    "Create a new invoice template.",
+    {
+      body: z.record(z.any()).describe("Invoice template data"),
+    },
+    async ({ body }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.payments.createInvoiceTemplate(body);
+        return ok(`Invoice template created!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_update_invoice_template",
+    "Update an existing invoice template.",
+    {
+      templateId: z.string().describe("Invoice template ID"),
+      body: z.record(z.any()).describe("Updated template data"),
+    },
+    async ({ templateId, body }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.payments.updateInvoiceTemplate(templateId, body);
+        return ok(`Invoice template updated!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_delete_invoice_template",
+    "Delete an invoice template by ID.",
+    {
+      templateId: z.string().describe("Invoice template ID"),
+      locationId: z.string().optional().describe("Target location"),
+    },
+    async ({ templateId, locationId }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        await client.payments.deleteInvoiceTemplate(templateId, locationId);
+        return ok(`Invoice template ${templateId} deleted.`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  // ==========================================================
+  // INVOICE SCHEDULES (expanded)
+  // ==========================================================
+
+  server.tool(
+    "ghl_get_invoice_schedule",
+    "Get a specific invoice schedule by ID.",
+    {
+      scheduleId: z.string().describe("Invoice schedule ID"),
+      locationId: z.string().optional().describe("Target location"),
+    },
+    async ({ scheduleId, locationId }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        const result = await client.payments.getInvoiceSchedule(scheduleId, locationId);
+        return ok(JSON.stringify(result, null, 2));
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_update_invoice_schedule",
+    "Update an existing invoice schedule.",
+    {
+      scheduleId: z.string().describe("Invoice schedule ID"),
+      body: z.record(z.any()).describe("Updated schedule data"),
+    },
+    async ({ scheduleId, body }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.payments.updateInvoiceSchedule(scheduleId, body);
+        return ok(`Invoice schedule updated!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_delete_invoice_schedule",
+    "Delete an invoice schedule by ID.",
+    {
+      scheduleId: z.string().describe("Invoice schedule ID"),
+      locationId: z.string().optional().describe("Target location"),
+    },
+    async ({ scheduleId, locationId }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        await client.payments.deleteInvoiceSchedule(scheduleId, locationId);
+        return ok(`Invoice schedule ${scheduleId} deleted.`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_manage_schedule_auto_payment",
+    "Manage auto-payment settings for an invoice schedule.",
+    {
+      scheduleId: z.string().describe("Invoice schedule ID"),
+      body: z.record(z.any()).describe("Auto-payment configuration"),
+    },
+    async ({ scheduleId, body }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.payments.manageScheduleAutoPayment(scheduleId, body);
+        return ok(`Auto-payment updated!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_cancel_scheduled_invoice",
+    "Cancel a scheduled invoice.",
+    {
+      scheduleId: z.string().describe("Invoice schedule ID"),
+      locationId: z.string().optional().describe("Target location"),
+    },
+    async ({ scheduleId, locationId }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        const result = await client.payments.cancelScheduledInvoice(scheduleId, locationId);
+        return ok(`Scheduled invoice cancelled!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  // ==========================================================
+  // ESTIMATES (expanded)
+  // ==========================================================
+
+  server.tool(
+    "ghl_update_estimate",
+    "Update an existing estimate.",
+    {
+      estimateId: z.string().describe("Estimate ID"),
+      body: z.record(z.any()).describe("Updated estimate data"),
+    },
+    async ({ estimateId, body }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.payments.updateEstimate(estimateId, body);
+        return ok(`Estimate updated!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_delete_estimate",
+    "Delete an estimate by ID.",
+    {
+      estimateId: z.string().describe("Estimate ID"),
+      locationId: z.string().optional().describe("Target location"),
+    },
+    async ({ estimateId, locationId }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        await client.payments.deleteEstimate(estimateId, locationId);
+        return ok(`Estimate ${estimateId} deleted.`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_generate_estimate_number",
+    "Generate a new estimate number.",
+    {
+      locationId: z.string().optional().describe("Target location"),
+    },
+    async ({ locationId }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        const result = await client.payments.generateEstimateNumber(locationId);
+        return ok(JSON.stringify(result, null, 2));
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  // ==========================================================
+  // ESTIMATE TEMPLATES
+  // ==========================================================
+
+  server.tool(
+    "ghl_list_estimate_templates",
+    "List estimate templates.",
+    {
+      locationId: z.string().optional().describe("Target location"),
+    },
+    async ({ locationId }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        const result = await client.payments.listEstimateTemplates(locationId);
+        return ok(JSON.stringify(result, null, 2));
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_create_estimate_template",
+    "Create an estimate template.",
+    {
+      body: z.record(z.any()).describe("Estimate template data"),
+    },
+    async ({ body }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.payments.createEstimateTemplate(body);
+        return ok(`Estimate template created!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_update_estimate_template",
+    "Update an existing estimate template.",
+    {
+      templateId: z.string().describe("Estimate template ID"),
+      body: z.record(z.any()).describe("Updated template data"),
+    },
+    async ({ templateId, body }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.payments.updateEstimateTemplate(templateId, body);
+        return ok(`Estimate template updated!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_delete_estimate_template",
+    "Delete an estimate template by ID.",
+    {
+      templateId: z.string().describe("Estimate template ID"),
+      locationId: z.string().optional().describe("Target location"),
+    },
+    async ({ templateId, locationId }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        await client.payments.deleteEstimateTemplate(templateId, locationId);
+        return ok(`Estimate template ${templateId} deleted.`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  // ==========================================================
+  // INVOICE TEMPLATE CONFIGS
+  // ==========================================================
+
+  server.tool(
+    "ghl_update_template_late_fees_config",
+    "Update late fees configuration for an invoice template.",
+    {
+      templateId: z.string().describe("Invoice template ID"),
+      body: z.record(z.any()).describe("Late fees config data"),
+    },
+    async ({ templateId, body }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.payments.updateTemplateLateFeesConfig(templateId, body);
+        return ok(`Template late fees config updated!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_update_template_payment_methods_config",
+    "Update payment methods configuration for an invoice template.",
+    {
+      templateId: z.string().describe("Invoice template ID"),
+      body: z.record(z.any()).describe("Payment methods config data"),
+    },
+    async ({ templateId, body }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.payments.updateTemplatePaymentMethodsConfig(templateId, body);
+        return ok(`Template payment methods config updated!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  // ==========================================================
+  // INVOICE LATE FEES + STATS
+  // ==========================================================
+
+  server.tool(
+    "ghl_update_invoice_late_fees_config",
+    "Update late fees configuration for a specific invoice.",
+    {
+      invoiceId: z.string().describe("Invoice ID"),
+      body: z.record(z.any()).describe("Late fees config data"),
+    },
+    async ({ invoiceId, body }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.payments.updateInvoiceLateFeesConfig(invoiceId, body);
+        return ok(`Invoice late fees config updated!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_update_invoice_last_visited",
+    "Update the last visited timestamp for invoices.",
+    {},
+    async () => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.payments.updateInvoiceLastVisited();
+        return ok(`Invoice last visited updated!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  // ==========================================================
+  // SCHEDULE INVOICE
+  // ==========================================================
+
+  server.tool(
+    "ghl_schedule_invoice",
+    "Schedule an invoice from an invoice schedule.",
+    {
+      scheduleId: z.string().describe("Invoice schedule ID"),
+      body: z.record(z.any()).describe("Schedule data"),
+    },
+    async ({ scheduleId, body }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.payments.scheduleInvoice(scheduleId, body);
+        return ok(`Invoice scheduled!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  // ==========================================================
+  // ORDER NOTES + PAYMENT
+  // ==========================================================
+
+  server.tool(
+    "ghl_list_order_notes",
+    "List notes for a specific order.",
+    {
+      orderId: z.string().describe("Order ID"),
+      locationId: z.string().optional().describe("Target location"),
+    },
+    async ({ orderId, locationId }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        const result = await client.payments.listOrderNotes(orderId, locationId);
+        return ok(JSON.stringify(result, null, 2));
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_record_order_payment",
+    "Record a payment against an order.",
+    {
+      orderId: z.string().describe("Order ID"),
+      body: z.record(z.any()).describe("Payment data"),
+    },
+    async ({ orderId, body }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.payments.recordOrderPayment(orderId, body);
+        return ok(`Order payment recorded!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  // ==========================================================
+  // CONVERT ESTIMATE
+  // ==========================================================
+
+  server.tool(
+    "ghl_convert_estimate_to_invoice",
+    "Convert an estimate to an invoice.",
+    {
+      estimateId: z.string().describe("Estimate ID"),
+    },
+    async ({ estimateId }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.payments.convertEstimateToInvoice(estimateId);
+        return ok(`Estimate converted to invoice!\n\n${JSON.stringify(result, null, 2)}`);
       } catch (e: any) {
         return err(e);
       }

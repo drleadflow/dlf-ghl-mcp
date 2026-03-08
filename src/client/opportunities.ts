@@ -50,6 +50,13 @@ export function opportunityMethods(client: BaseGHLClient) {
       });
     },
 
+    async updateOpportunityStatus(opportunityId: string, status: string) {
+      return client.request<{ opportunity: any }>("PUT", `/opportunities/${opportunityId}/status`, {
+        body: { status },
+        version: "2021-07-28",
+      });
+    },
+
     async deleteOpportunity(opportunityId: string) {
       return client.request<any>("DELETE", `/opportunities/${opportunityId}`, {
         version: "2021-07-28",
@@ -86,6 +93,27 @@ export function opportunityMethods(client: BaseGHLClient) {
 
     async deletePipeline(pipelineId: string) {
       return client.request<any>("DELETE", `/opportunities/pipelines/${pipelineId}`, {
+        version: "2021-07-28",
+      });
+    },
+
+    async upsertOpportunity(data: any) {
+      return client.request<any>("POST", `/opportunities/upsert`, {
+        body: { ...data, locationId: data.locationId || client.locationId },
+        version: "2021-07-28",
+      });
+    },
+
+    async addOpportunityFollowers(opportunityId: string, data: any) {
+      return client.request<any>("POST", `/opportunities/${opportunityId}/followers`, {
+        body: data,
+        version: "2021-07-28",
+      });
+    },
+
+    async removeOpportunityFollowers(opportunityId: string, data: any) {
+      return client.request<any>("DELETE", `/opportunities/${opportunityId}/followers`, {
+        body: data,
         version: "2021-07-28",
       });
     },

@@ -37,9 +37,53 @@ export function contactMethods(client: BaseGHLClient) {
       });
     },
 
-    async bulkImportContacts(data: any) {
+    async upsertContact(data: any) {
       return client.request<{ contact: any; new?: boolean }>("POST", `/contacts/upsert`, {
         body: { ...data, locationId: data.locationId || client.locationId },
+        version: "2021-07-28",
+      });
+    },
+
+    async addContactTags(contactId: string, tags: string[]) {
+      return client.request<any>("POST", `/contacts/${contactId}/tags`, {
+        body: { tags },
+        version: "2021-07-28",
+      });
+    },
+
+    async removeContactTags(contactId: string, tags: string[]) {
+      return client.request<any>("DELETE", `/contacts/${contactId}/tags`, {
+        body: { tags },
+        version: "2021-07-28",
+      });
+    },
+
+    async addContactToWorkflow(contactId: string, workflowId: string) {
+      return client.request<any>("POST", `/contacts/${contactId}/workflow/${workflowId}`, {
+        version: "2021-07-28",
+      });
+    },
+
+    async removeContactFromWorkflow(contactId: string, workflowId: string) {
+      return client.request<any>("DELETE", `/contacts/${contactId}/workflow/${workflowId}`, {
+        version: "2021-07-28",
+      });
+    },
+
+    async getContactAppointments(contactId: string) {
+      return client.request<{ events: any[] }>("GET", `/contacts/${contactId}/appointments`, {
+        version: "2021-07-28",
+      });
+    },
+
+    async getContactNotes(contactId: string) {
+      return client.request<{ notes: any[] }>("GET", `/contacts/${contactId}/notes`, {
+        version: "2021-07-28",
+      });
+    },
+
+    async getContactTasks(contactId: string) {
+      return client.request<{ tasks: any[] }>("GET", `/contacts/${contactId}/tasks`, {
         version: "2021-07-28",
       });
     },
@@ -118,6 +162,53 @@ export function contactMethods(client: BaseGHLClient) {
 
     async deleteDuplicateContact(contactId: string) {
       return client.request<any>("DELETE", `/contacts/${contactId}`, {
+        version: "2021-07-28",
+      });
+    },
+
+    async listContacts(locationId?: string, params?: any) {
+      const q: Record<string, string> = { locationId: locationId || client.locationId };
+      if (params) {
+        Object.entries(params).forEach(([k, v]) => {
+          if (v !== undefined && v !== null) q[k] = String(v);
+        });
+      }
+      return client.request<{ contacts: any[]; meta?: any }>("GET", `/contacts/`, {
+        query: q,
+        version: "2021-07-28",
+      });
+    },
+
+    async getContactsByBusiness(businessId: string) {
+      return client.request<any>("GET", `/contacts/business/${businessId}`, {
+        version: "2021-07-28",
+      });
+    },
+
+    async bulkUpdateTags(type: "add" | "remove", data: any) {
+      return client.request<any>("POST", `/contacts/bulk/tags/update/${type}`, {
+        body: data,
+        version: "2021-07-28",
+      });
+    },
+
+    async addContactFollowers(contactId: string, data: any) {
+      return client.request<any>("POST", `/contacts/${contactId}/followers`, {
+        body: data,
+        version: "2021-07-28",
+      });
+    },
+
+    async removeContactFollowers(contactId: string, data: any) {
+      return client.request<any>("DELETE", `/contacts/${contactId}/followers`, {
+        body: data,
+        version: "2021-07-28",
+      });
+    },
+
+    async updateTaskCompleted(contactId: string, taskId: string, data: any) {
+      return client.request<any>("PUT", `/contacts/${contactId}/tasks/${taskId}/completed`, {
+        body: data,
         version: "2021-07-28",
       });
     },

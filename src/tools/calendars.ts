@@ -128,15 +128,18 @@ export function registerCalendarsTools(server: McpServer, env: Env) {
       calendarId: z.string().describe("Calendar ID to book on"),
       contactId: z.string().describe("Contact ID for the appointment"),
       startTime: z.string().describe("Start time (ISO 8601)"),
-      endTime: z.string().describe("End time (ISO 8601)"),
+      endTime: z.string().optional().describe("End time (ISO 8601)"),
       title: z.string().optional().describe("Appointment title"),
       appointmentStatus: z
-        .enum(["confirmed", "new", "showed", "noshow", "cancelled", "invalid"])
+        .enum(["new", "confirmed", "cancelled", "showed", "noshow", "invalid", "completed", "active"])
         .optional()
         .describe("Status"),
       assignedUserId: z.string().optional().describe("Assign to a team member user ID"),
       address: z.string().optional().describe("Address for the appointment"),
-      toNotify: z.boolean().optional().describe("Send notification to assignee"),
+      description: z.string().optional().describe("Appointment description"),
+      toNotify: z.boolean().optional().describe("Send notification to assignee (default true)"),
+      ignoreDateRange: z.boolean().optional().describe("If true, ignore minimum scheduling notice and date range"),
+      ignoreFreeSlotValidation: z.boolean().optional().describe("If true, skip time slot availability validation"),
       locationId: z.string().optional().describe("Target location"),
     },
     async (args) => {
@@ -185,6 +188,177 @@ export function registerCalendarsTools(server: McpServer, env: Env) {
         const client = await resolveClient(env);
         await client.calendars.deleteAppointment(eventId);
         return ok(`Appointment ${eventId} deleted.`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  // ========== CALENDAR CRUD ==========
+
+  server.tool(
+    "ghl_create_calendar",
+    "Create a new calendar (personal, round_robin, class_booking, collective, or service_booking).",
+    {
+      locationId: z.string().optional().describe("Target location"),
+      name: z.string().describe("Calendar name"),
+      calendarType: z.enum(["personal", "round_robin", "class_booking", "collective", "service_booking"]).optional().describe("Calendar type"),
+      description: z.string().optional().describe("Calendar description"),
+      slotDuration: z.number().optional().describe("Slot duration in minutes"),
+      slotBuffer: z.number().optional().describe("Buffer between slots in minutes"),
+      isActive: z.boolean().optional().describe("Whether the calendar is active"),
+    },
+    async ({ locationId, ...data }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        const result = await client.calendars.createCalendar({ ...data, locationId: locationId || client.locationId });
+        return ok(`Calendar created!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_update_calendar",
+    "Update an existing calendar's settings.",
+    {
+      calendarId: z.string().describe("Calendar ID to update"),
+      name: z.string().optional().describe("Calendar name"),
+      description: z.string().optional().describe("Calendar description"),
+      slotDuration: z.number().optional().describe("Slot duration in minutes"),
+      slotBuffer: z.number().optional().describe("Buffer between slots in minutes"),
+      isActive: z.boolean().optional().describe("Whether the calendar is active"),
+    },
+    async ({ calendarId, ...data }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.calendars.updateCalendar(calendarId, data);
+        return ok(`Calendar updated!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_delete_calendar",
+    "Delete a calendar by ID.",
+    { calendarId: z.string().describe("Calendar ID to delete") },
+    async ({ calendarId }) => {
+      try {
+        const client = await resolveClient(env);
+        await client.calendars.deleteCalendar(calendarId);
+        return ok(`Calendar ${calendarId} deleted.`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  // ========== CALENDAR GROUPS ==========
+
+  server.tool(
+    "ghl_list_calendar_groups",
+    "List all calendar groups in a location.",
+    { locationId: z.string().optional().describe("Target location") },
+    async ({ locationId }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        const result = await client.calendars.listCalendarGroups(locationId);
+        return ok(JSON.stringify(result, null, 2));
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_get_calendar_group",
+    "Get a specific calendar group by ID.",
+    { groupId: z.string().describe("Calendar group ID") },
+    async ({ groupId }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.calendars.getCalendarGroup(groupId);
+        return ok(JSON.stringify(result, null, 2));
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_create_calendar_group",
+    "Create a new calendar group.",
+    {
+      locationId: z.string().optional().describe("Target location"),
+      name: z.string().describe("Group name"),
+      description: z.string().optional().describe("Group description"),
+      slug: z.string().optional().describe("URL-friendly slug"),
+    },
+    async ({ locationId, ...data }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        const result = await client.calendars.createCalendarGroup({ ...data, locationId: locationId || client.locationId });
+        return ok(`Calendar group created!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_update_calendar_group",
+    "Update a calendar group.",
+    {
+      groupId: z.string().describe("Calendar group ID to update"),
+      name: z.string().optional().describe("Group name"),
+      description: z.string().optional().describe("Group description"),
+      slug: z.string().optional().describe("URL-friendly slug"),
+    },
+    async ({ groupId, ...data }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.calendars.updateCalendarGroup(groupId, data);
+        return ok(`Calendar group updated!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_delete_calendar_group",
+    "Delete a calendar group.",
+    { groupId: z.string().describe("Calendar group ID to delete") },
+    async ({ groupId }) => {
+      try {
+        const client = await resolveClient(env);
+        await client.calendars.deleteCalendarGroup(groupId);
+        return ok(`Calendar group ${groupId} deleted.`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  // ========== BLOCKED SLOTS (continued) ==========
+
+  server.tool(
+    "ghl_update_blocked_slot",
+    "Update an existing blocked time slot.",
+    {
+      slotId: z.string().describe("Blocked slot ID"),
+      startTime: z.string().optional().describe("New start time (ISO 8601)"),
+      endTime: z.string().optional().describe("New end time (ISO 8601)"),
+      title: z.string().optional().describe("New reason/title"),
+    },
+    async ({ slotId, ...data }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.calendars.updateBlockedSlot(slotId, data);
+        return ok(`Blocked slot updated!\n\n${JSON.stringify(result, null, 2)}`);
       } catch (e: any) {
         return err(e);
       }
@@ -250,6 +424,322 @@ export function registerCalendarsTools(server: McpServer, env: Env) {
         const client = await resolveClient(env);
         await client.calendars.deleteBlockedSlot(slotId);
         return ok(`Blocked slot ${slotId} deleted.`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  // ========== VALIDATE GROUP SLUG ==========
+
+  server.tool(
+    "ghl_validate_group_slug",
+    "Validate a calendar group URL slug to check availability.",
+    {
+      locationId: z.string().optional().describe("Target location"),
+      slug: z.string().describe("Slug to validate"),
+    },
+    async ({ locationId, slug }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        const result = await client.calendars.validateGroupSlug({ locationId: locationId || client.locationId, slug });
+        return ok(`Slug validation result:\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  // ========== APPOINTMENT NOTES ==========
+
+  server.tool(
+    "ghl_get_appointment_notes",
+    "Get all notes for a specific appointment.",
+    { appointmentId: z.string().describe("Appointment ID") },
+    async ({ appointmentId }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.calendars.getAppointmentNotes(appointmentId);
+        return ok(JSON.stringify(result, null, 2));
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_create_appointment_note",
+    "Add a note to an appointment.",
+    {
+      appointmentId: z.string().describe("Appointment ID"),
+      body: z.string().optional().describe("Note body/content"),
+      notes: z.string().optional().describe("Note text"),
+    },
+    async ({ appointmentId, ...data }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.calendars.createAppointmentNote(appointmentId, data);
+        return ok(`Appointment note created!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_update_appointment_note",
+    "Update a note on an appointment.",
+    {
+      appointmentId: z.string().describe("Appointment ID"),
+      noteId: z.string().describe("Note ID"),
+      body: z.string().optional().describe("Updated note body/content"),
+      notes: z.string().optional().describe("Updated note text"),
+    },
+    async ({ appointmentId, noteId, ...data }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.calendars.updateAppointmentNote(appointmentId, noteId, data);
+        return ok(`Appointment note updated!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_delete_appointment_note",
+    "Delete a note from an appointment.",
+    {
+      appointmentId: z.string().describe("Appointment ID"),
+      noteId: z.string().describe("Note ID"),
+    },
+    async ({ appointmentId, noteId }) => {
+      try {
+        const client = await resolveClient(env);
+        await client.calendars.deleteAppointmentNote(appointmentId, noteId);
+        return ok(`Appointment note ${noteId} deleted.`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  // ========== CALENDAR RESOURCES ==========
+
+  server.tool(
+    "ghl_list_calendar_resources",
+    "List calendar resources by type (e.g. equipments, rooms).",
+    {
+      resourceType: z.string().describe("Resource type (e.g. equipments, rooms)"),
+      locationId: z.string().optional().describe("Target location"),
+    },
+    async ({ resourceType, locationId }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        const result = await client.calendars.listCalendarResources(resourceType, locationId);
+        return ok(JSON.stringify(result, null, 2));
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_create_calendar_resource",
+    "Create a new calendar resource (equipment, room, etc.).",
+    {
+      resourceType: z.string().describe("Resource type (e.g. equipments, rooms)"),
+      name: z.string().optional().describe("Resource name"),
+      description: z.string().optional().describe("Resource description"),
+      quantity: z.number().optional().describe("Available quantity"),
+      locationId: z.string().optional().describe("Target location"),
+      outOfService: z.boolean().optional().describe("Whether the resource is out of service"),
+      calendarIds: z.array(z.string()).optional().describe("Associated calendar IDs"),
+    },
+    async ({ resourceType, locationId, ...data }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        const result = await client.calendars.createCalendarResource(resourceType, { ...data, locationId: locationId || client.locationId });
+        return ok(`Calendar resource created!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_get_calendar_resource",
+    "Get a specific calendar resource by type and ID.",
+    {
+      resourceType: z.string().describe("Resource type (e.g. equipments, rooms)"),
+      id: z.string().describe("Resource ID"),
+    },
+    async ({ resourceType, id }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.calendars.getCalendarResource(resourceType, id);
+        return ok(JSON.stringify(result, null, 2));
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_update_calendar_resource",
+    "Update a calendar resource.",
+    {
+      resourceType: z.string().describe("Resource type (e.g. equipments, rooms)"),
+      id: z.string().describe("Resource ID"),
+      name: z.string().optional().describe("Resource name"),
+      description: z.string().optional().describe("Resource description"),
+      quantity: z.number().optional().describe("Available quantity"),
+      outOfService: z.boolean().optional().describe("Whether the resource is out of service"),
+      calendarIds: z.array(z.string()).optional().describe("Associated calendar IDs"),
+    },
+    async ({ resourceType, id, ...data }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.calendars.updateCalendarResource(resourceType, id, data);
+        return ok(`Calendar resource updated!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_delete_calendar_resource",
+    "Delete a calendar resource.",
+    {
+      resourceType: z.string().describe("Resource type (e.g. equipments, rooms)"),
+      id: z.string().describe("Resource ID"),
+    },
+    async ({ resourceType, id }) => {
+      try {
+        const client = await resolveClient(env);
+        await client.calendars.deleteCalendarResource(resourceType, id);
+        return ok(`Calendar resource ${id} deleted.`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  // ========== CALENDAR NOTIFICATIONS ==========
+
+  server.tool(
+    "ghl_list_calendar_notifications",
+    "List all notifications configured for a calendar.",
+    { calendarId: z.string().describe("Calendar ID") },
+    async ({ calendarId }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.calendars.listCalendarNotifications(calendarId);
+        return ok(JSON.stringify(result, null, 2));
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_create_calendar_notification",
+    "Create a notification for a calendar.",
+    {
+      calendarId: z.string().describe("Calendar ID"),
+      type: z.string().optional().describe("Notification type"),
+      shouldSendToContact: z.boolean().optional().describe("Send to contact"),
+      shouldSendToUser: z.boolean().optional().describe("Send to assigned user"),
+      shouldSendToGuest: z.boolean().optional().describe("Send to guest"),
+      selectedUsers: z.array(z.string()).optional().describe("Specific user IDs to notify"),
+      templateId: z.string().optional().describe("Template ID for the notification"),
+    },
+    async ({ calendarId, ...data }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.calendars.createCalendarNotification(calendarId, data);
+        return ok(`Calendar notification created!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_get_calendar_notification",
+    "Get a specific calendar notification by ID.",
+    {
+      calendarId: z.string().describe("Calendar ID"),
+      notificationId: z.string().describe("Notification ID"),
+    },
+    async ({ calendarId, notificationId }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.calendars.getCalendarNotification(calendarId, notificationId);
+        return ok(JSON.stringify(result, null, 2));
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_update_calendar_notification",
+    "Update a calendar notification.",
+    {
+      calendarId: z.string().describe("Calendar ID"),
+      notificationId: z.string().describe("Notification ID"),
+      type: z.string().optional().describe("Notification type"),
+      shouldSendToContact: z.boolean().optional().describe("Send to contact"),
+      shouldSendToUser: z.boolean().optional().describe("Send to assigned user"),
+      shouldSendToGuest: z.boolean().optional().describe("Send to guest"),
+      selectedUsers: z.array(z.string()).optional().describe("Specific user IDs to notify"),
+      templateId: z.string().optional().describe("Template ID for the notification"),
+    },
+    async ({ calendarId, notificationId, ...data }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.calendars.updateCalendarNotification(calendarId, notificationId, data);
+        return ok(`Calendar notification updated!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_delete_calendar_notification",
+    "Delete a calendar notification.",
+    {
+      calendarId: z.string().describe("Calendar ID"),
+      notificationId: z.string().describe("Notification ID"),
+    },
+    async ({ calendarId, notificationId }) => {
+      try {
+        const client = await resolveClient(env);
+        await client.calendars.deleteCalendarNotification(calendarId, notificationId);
+        return ok(`Calendar notification ${notificationId} deleted.`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  // ========== GROUP STATUS ==========
+
+  server.tool(
+    "ghl_update_calendar_group_status",
+    "Update the status of a calendar group (enable/disable).",
+    {
+      groupId: z.string().describe("Calendar group ID"),
+      isActive: z.boolean().optional().describe("Whether the group is active"),
+    },
+    async ({ groupId, ...data }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.calendars.updateCalendarGroupStatus(groupId, data);
+        return ok(`Calendar group status updated!\n\n${JSON.stringify(result, null, 2)}`);
       } catch (e: any) {
         return err(e);
       }

@@ -18,9 +18,9 @@ export function registerAIAgentsTools(server: McpServer, env: Env) {
     async ({ locationId, page, pageSize, query }) => {
       try {
         const client = await resolveClient(env, locationId);
-        const result = await client.aiAgents.listVoiceAgents(client.apiKey, locationId || client.locationId, {
-          page,
-          pageSize,
+        const result = await client.aiAgents.listVoiceAgents(locationId || client.locationId, {
+          page: page != null ? String(page) : undefined,
+          pageSize: pageSize != null ? String(pageSize) : undefined,
           query,
         });
         return ok(JSON.stringify(result, null, 2));
@@ -40,7 +40,7 @@ export function registerAIAgentsTools(server: McpServer, env: Env) {
     async ({ agentId, locationId }) => {
       try {
         const client = await resolveClient(env, locationId);
-        const result = await client.aiAgents.getVoiceAgent(client.apiKey, agentId, locationId || client.locationId);
+        const result = await client.aiAgents.getVoiceAgent(agentId, locationId || client.locationId);
         return ok(JSON.stringify(result, null, 2));
       } catch (e: any) {
         return err(e);
@@ -65,7 +65,7 @@ export function registerAIAgentsTools(server: McpServer, env: Env) {
     async ({ locationId, agentName, businessName, welcomeMessage, agentPrompt, voiceId, language, patienceLevel, maxCallDuration }) => {
       try {
         const client = await resolveClient(env, locationId);
-        const result = await client.aiAgents.createVoiceAgent(client.apiKey, {
+        const result = await client.aiAgents.createVoiceAgent({
           agentName,
           businessName,
           welcomeMessage,
@@ -95,7 +95,6 @@ export function registerAIAgentsTools(server: McpServer, env: Env) {
       try {
         const client = await resolveClient(env, locationId);
         const result = await client.aiAgents.updateVoiceAgent(
-          client.apiKey,
           agentId,
           locationId || client.locationId,
           body
@@ -117,7 +116,7 @@ export function registerAIAgentsTools(server: McpServer, env: Env) {
     async ({ agentId, locationId }) => {
       try {
         const client = await resolveClient(env, locationId);
-        await client.aiAgents.deleteVoiceAgent(client.apiKey, agentId, locationId || client.locationId);
+        await client.aiAgents.deleteVoiceAgent(agentId, locationId || client.locationId);
         return ok(`Voice agent ${agentId} deleted.`);
       } catch (e: any) {
         return err(e);
@@ -138,7 +137,7 @@ export function registerAIAgentsTools(server: McpServer, env: Env) {
     async ({ agentId, locationId, actionType, name, actionParameters }) => {
       try {
         const client = await resolveClient(env, locationId);
-        const result = await client.aiAgents.createVoiceAction(client.apiKey, {
+        const result = await client.aiAgents.createVoiceAction({
           agentId,
           locationId: locationId || client.locationId,
           actionType,
@@ -162,7 +161,7 @@ export function registerAIAgentsTools(server: McpServer, env: Env) {
     async ({ actionId, locationId }) => {
       try {
         const client = await resolveClient(env, locationId);
-        const result = await client.aiAgents.getVoiceAction(client.apiKey, actionId, locationId || client.locationId);
+        const result = await client.aiAgents.getVoiceAction(actionId, locationId || client.locationId);
         return ok(JSON.stringify(result, null, 2));
       } catch (e: any) {
         return err(e);
@@ -184,7 +183,7 @@ export function registerAIAgentsTools(server: McpServer, env: Env) {
     async ({ actionId, agentId, locationId, actionType, name, actionParameters }) => {
       try {
         const client = await resolveClient(env, locationId);
-        const result = await client.aiAgents.updateVoiceAction(client.apiKey, actionId, {
+        const result = await client.aiAgents.updateVoiceAction(actionId, {
           agentId,
           locationId: locationId || client.locationId,
           actionType,
@@ -209,7 +208,7 @@ export function registerAIAgentsTools(server: McpServer, env: Env) {
     async ({ actionId, locationId, agentId }) => {
       try {
         const client = await resolveClient(env, locationId);
-        await client.aiAgents.deleteVoiceAction(client.apiKey, actionId, locationId || client.locationId, agentId);
+        await client.aiAgents.deleteVoiceAction(actionId, locationId || client.locationId, agentId);
         return ok(`Voice action ${actionId} deleted.`);
       } catch (e: any) {
         return err(e);
@@ -233,14 +232,14 @@ export function registerAIAgentsTools(server: McpServer, env: Env) {
     async ({ locationId, agentId, contactId, callType, startDate, endDate, page, pageSize }) => {
       try {
         const client = await resolveClient(env, locationId);
-        const result = await client.aiAgents.listCallLogs(client.apiKey, locationId || client.locationId, {
+        const result = await client.aiAgents.listCallLogs(locationId || client.locationId, {
           agentId,
           contactId,
           callType,
-          startDate,
-          endDate,
-          page,
-          pageSize,
+          startDate: startDate != null ? String(startDate) : undefined,
+          endDate: endDate != null ? String(endDate) : undefined,
+          page: page != null ? String(page) : undefined,
+          pageSize: pageSize != null ? String(pageSize) : undefined,
         });
         return ok(JSON.stringify(result, null, 2));
       } catch (e: any) {
@@ -259,7 +258,7 @@ export function registerAIAgentsTools(server: McpServer, env: Env) {
     async ({ callId, locationId }) => {
       try {
         const client = await resolveClient(env, locationId);
-        const result = await client.aiAgents.getCallLog(client.apiKey, callId, locationId || client.locationId);
+        const result = await client.aiAgents.getCallLog(callId, locationId || client.locationId);
         return ok(JSON.stringify(result, null, 2));
       } catch (e: any) {
         return err(e);
@@ -389,6 +388,233 @@ export function registerAIAgentsTools(server: McpServer, env: Env) {
         const client = await resolveClient(env);
         await client.aiAgents.deleteConversationAgent(agentId);
         return ok(`Conversation AI agent ${agentId} deleted.`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  // ========== CONVERSATION AI ACTIONS ==========
+
+  server.tool(
+    "ghl_create_conversation_action",
+    `Attach a new action to a Conversation AI agent.
+
+CRITICAL: actionParameters MUST contain a top-level "name" string AND a "details" object. All action-specific config goes inside "details". Do NOT put action fields (calendarId, workflowId, etc.) flat at the top level of actionParameters.
+
+Body sent to GHL API: { type, name, details: {...} }
+
+--- ACTION TYPE SCHEMAS ---
+
+appointmentBooking:
+  { name: "Appointment Booking Action", details: { calendarId: "<id>", calendarActionType: "single", onlySendLink: false, triggerWorkflow: false, sleepAfterBooking: true, sleepTimeUnit: "days", sleepTime: 2, transferBot: false, rescheduleEnabled: true, cancelEnabled: true } }
+  WARNING: Do NOT include transferEmployee (even as null) — omit the field entirely or the API returns 422.
+
+stopBot:
+  { name: "Goodbye Detection", details: { stopBotExamples: ["Bye","Goodbye","Not interested"], stopBotDetectionType: "Goodbye", stopBotTriggerCondition: "When the contact says goodbye", finalMessage: "Thank you, have a nice day.", enabled: true, reactivateEnabled: true, sleepTimeUnit: "hours", sleepTime: 24, tags: ["stop bot"] } }
+
+humanHandOver:
+  { name: "Failed to resolve issue", details: { enabled: true, triggerCondition: "Multiple attempts to resolve the issue has failed", examples: [], assignToUserId: "<userId>", skipAssignToUser: true, createTask: true, finalMessage: "I've escalated this to the team.", reactivateEnabled: false, sleepTimeUnit: null, sleepTime: null, tags: ["human handover"], handoverType: "failedToResolveIssue" } }
+  WARNING: assignToUserId is REQUIRED even when skipAssignToUser is true. Omitting it causes a 400 error. handoverType options: "failedToResolveIssue" | "lackOfInformation"
+
+updateContactField:
+  { name: "Revenue", details: { contactFieldId: "<fieldId>", description: "Current revenue range", contactUpdateExamples: ["Under 100k a year", "1 million a year"] } }
+
+advancedFollowup — contactStoppedReplying:
+  { name: "Contact Stopped Replying", details: { enabled: true, scenarioId: "contactStoppedReplying", followupSequence: [ { id: 1, aiEnabledMessage: true, triggerWorkflow: false, followupTime: 1, followupTimeUnit: "days", customMessage: null, workflowId: null }, { id: 2, aiEnabledMessage: true, triggerWorkflow: false, followupTime: 2, followupTimeUnit: "days", customMessage: "", workflowId: "" } ] } }
+
+advancedFollowup — contactRequested:
+  { name: "Contact Requested", details: { enabled: true, scenarioId: "contactRequested", followupSequence: [ { id: 1, aiEnabledMessage: true, triggerWorkflow: false, followupTime: 2, followupTimeUnit: "hours", customMessage: null, workflowId: null, contactRequested: true } ] } }
+
+triggerWorkflow:
+  { name: "Trigger Workflow", details: { workflowId: "<workflowId>" } }`,
+    {
+      agentId: z.string().describe("The conversation agent ID"),
+      type: z.string().describe("Action type: triggerWorkflow, updateContactField, appointmentBooking, stopBot, humanHandOver, advancedFollowup, transferBot"),
+      actionParameters: z.record(z.any()).optional().describe("Must contain top-level 'name' (string) and 'details' (object). All action-specific config goes inside 'details' — never flat at the top level of actionParameters."),
+    },
+    async ({ agentId, type, actionParameters }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.aiAgents.createConversationAction(agentId, { type, ...actionParameters });
+        return ok(`Conversation action created!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_list_conversation_actions",
+    "List all actions attached to a Conversation AI agent (booking, workflows, contact field updates, etc.).",
+    {
+      agentId: z.string().describe("The conversation agent ID"),
+    },
+    async ({ agentId }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.aiAgents.listConversationActions(agentId);
+        return ok(JSON.stringify(result, null, 2));
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_get_conversation_action",
+    "Get details of a specific action on a Conversation AI agent (shows calendarId, workflowId, field mappings, etc.).",
+    {
+      agentId: z.string().describe("The conversation agent ID"),
+      actionId: z.string().describe("The action ID"),
+    },
+    async ({ agentId, actionId }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.aiAgents.getConversationAction(agentId, actionId);
+        return ok(JSON.stringify(result, null, 2));
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_update_conversation_action",
+    `Update an action on a Conversation AI agent.
+
+Same structure rules as ghl_create_conversation_action apply:
+- actionParameters must contain top-level "name" and "details" — never put action fields flat at the top level.
+- For appointmentBooking: omit transferEmployee entirely (null value causes 422).
+- For humanHandOver: assignToUserId is required even when skipAssignToUser is true.
+- Send the full details object — partial updates may overwrite existing fields.`,
+    {
+      agentId: z.string().describe("The conversation agent ID"),
+      actionId: z.string().describe("The action ID to update"),
+      type: z.string().optional().describe("Action type"),
+      actionParameters: z.record(z.any()).optional().describe("Must contain top-level 'name' and 'details'. See ghl_create_conversation_action for full schemas per action type."),
+    },
+    async ({ agentId, actionId, type, actionParameters }) => {
+      try {
+        const client = await resolveClient(env);
+        const data: any = {};
+        if (type) data.type = type;
+        if (actionParameters) Object.assign(data, actionParameters);
+        const result = await client.aiAgents.updateConversationAction(agentId, actionId, data);
+        return ok(`Conversation action updated!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_delete_conversation_action",
+    "Remove an action from a Conversation AI agent. This permanently deletes the action.",
+    {
+      agentId: z.string().describe("The conversation agent ID"),
+      actionId: z.string().describe("The action ID to delete"),
+    },
+    async ({ agentId, actionId }) => {
+      try {
+        const client = await resolveClient(env);
+        await client.aiAgents.deleteConversationAction(agentId, actionId);
+        return ok(`Conversation action ${actionId} deleted from agent ${agentId}.`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  // ========== CONVERSATION AI FOLLOWUP SETTINGS ==========
+
+  server.tool(
+    "ghl_update_followup_settings",
+    "Update followup settings for a Conversation AI agent (channel switching, working hours, timezone, availability).",
+    {
+      agentId: z.string().describe("The conversation agent ID"),
+      settings: z.record(z.any()).describe("Followup settings object (dynamicChannelSwitching, respectWorkingHours, timezone, availabilityIntervals, etc.)"),
+    },
+    async ({ agentId, settings }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.aiAgents.updateFollowupSettings(agentId, settings);
+        return ok(`Followup settings updated!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  // ========== CONVERSATION AI GENERATIONS ==========
+
+  server.tool(
+    "ghl_get_conversation_generation",
+    "Get details of how the AI generated a specific response (system prompt, knowledge base chunks, action logs, intent).",
+    {
+      messageId: z.string().describe("The message ID to inspect"),
+      source: z.enum(["conversation", "workflow"]).optional().describe("Source context (conversation or workflow)"),
+    },
+    async ({ messageId, source }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.aiAgents.getConversationGeneration(messageId, source);
+        return ok(JSON.stringify(result, null, 2));
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  // ========== AGENT STUDIO ==========
+
+  server.tool(
+    "ghl_list_agent_studio_agents",
+    "List Agent Studio agents for a location.",
+    {
+      locationId: z.string().optional(),
+    },
+    async ({ locationId }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        const result = await client.aiAgents.listAgentStudioAgents(locationId || client.locationId);
+        return ok(JSON.stringify(result, null, 2));
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_get_agent_studio_agent",
+    "Get an Agent Studio agent by ID.",
+    {
+      agentId: z.string(),
+      locationId: z.string().optional(),
+    },
+    async ({ agentId, locationId }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        const result = await client.aiAgents.getAgentStudioAgent(agentId, locationId || client.locationId);
+        return ok(JSON.stringify(result, null, 2));
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_execute_agent_studio_agent",
+    "Execute an Agent Studio agent.",
+    {
+      agentId: z.string(),
+      data: z.record(z.any()),
+    },
+    async ({ agentId, data }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.aiAgents.executeAgentStudioAgent(agentId, data);
+        return ok(`Agent executed!\n\n${JSON.stringify(result, null, 2)}`);
       } catch (e: any) {
         return err(e);
       }

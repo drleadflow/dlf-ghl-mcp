@@ -105,5 +105,14 @@ export function automationMethods(client: BaseGHLClient) {
         version: "2021-07-28",
       });
     },
+
+    // ========== FORM FILE UPLOADS ==========
+
+    async uploadFormCustomFiles(data: any) {
+      return client.request<any>("POST", `/forms/upload-custom-files`, {
+        body: data,
+        version: "2021-07-28",
+      });
+    },
   };
 }

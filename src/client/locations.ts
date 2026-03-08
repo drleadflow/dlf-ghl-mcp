@@ -2,6 +2,8 @@ import { BaseGHLClient } from "./base";
 
 export function locationMethods(client: BaseGHLClient) {
   return {
+    // ========== LOCATION BASICS ==========
+
     async getLocation(locationId?: string) {
       const locId = locationId || client.locationId;
       return client.request<{ location: any }>("GET", `/locations/${locId}`, {
@@ -12,6 +14,25 @@ export function locationMethods(client: BaseGHLClient) {
     async updateLocation(locationId: string, data: any) {
       return client.request<{ location: any }>("PUT", `/locations/${locationId}`, {
         body: data,
+        version: "2021-07-28",
+      });
+    },
+
+    async createLocation(data: any) {
+      return client.request<{ location: any }>("POST", `/locations/`, {
+        body: data,
+        version: "2021-07-28",
+      });
+    },
+
+    async deleteLocation(locationId: string) {
+      return client.request<any>("DELETE", `/locations/${locationId}`, {
+        version: "2021-07-28",
+      });
+    },
+
+    async getLocationTimezones(locationId?: string) {
+      return client.request<any>("GET", `/locations/${locationId || client.locationId}/timezones`, {
         version: "2021-07-28",
       });
     },
@@ -27,6 +48,15 @@ export function locationMethods(client: BaseGHLClient) {
         version: "2021-07-28",
       });
     },
+
+    async searchLocationTasks(locationId: string, body: any) {
+      return client.request<any>("POST", `/locations/${locationId}/tasks/search`, {
+        body,
+        version: "2021-07-28",
+      });
+    },
+
+    // ========== TAGS ==========
 
     async listLocationTags(locationId?: string) {
       const locId = locationId || client.locationId;
@@ -58,6 +88,8 @@ export function locationMethods(client: BaseGHLClient) {
       });
     },
 
+    // ========== LOCATION CUSTOM FIELDS ==========
+
     async getLocationCustomFields(locationId?: string) {
       const locId = locationId || client.locationId;
       return client.request<{ customFields: any[] }>("GET", `/locations/${locId}/customFields`, {
@@ -87,6 +119,8 @@ export function locationMethods(client: BaseGHLClient) {
         version: "2021-07-28",
       });
     },
+
+    // ========== CUSTOM FIELDS V2 ==========
 
     async listCustomFieldsV2(objectKey: string, locationId?: string) {
       return client.request<{ fields: any[]; folders: any[] }>("GET", `/custom-fields/object-key/${objectKey}`, {
@@ -121,21 +155,20 @@ export function locationMethods(client: BaseGHLClient) {
       });
     },
 
-    async listCustomValues(locationId?: string) {
+    // ========== CUSTOM VALUES ==========
+
+    async listCustomValues(locationId?: string, opts?: { limit?: number; skip?: number }) {
       const locId = locationId || client.locationId;
+      const q: Record<string, string> = {};
+      if (opts?.limit) q.limit = String(opts.limit);
+      if (opts?.skip) q.skip = String(opts.skip);
       return client.request<{ customValues: any[] }>("GET", `/locations/${locId}/customValues`, {
+        query: q,
         version: "2021-07-28",
       });
     },
 
-    async getCustomValue(valueId: string, locationId?: string) {
-      const locId = locationId || client.locationId;
-      return client.request<{ customValue: any }>("GET", `/locations/${locId}/customValues/${valueId}`, {
-        version: "2021-07-28",
-      });
-    },
-
-    async createCustomValue(data: { name: string; value: string }, locationId?: string) {
+    async createCustomValue(data: any, locationId?: string) {
       const locId = locationId || client.locationId;
       return client.request<{ customValue: any }>("POST", `/locations/${locId}/customValues`, {
         body: data,
@@ -143,7 +176,7 @@ export function locationMethods(client: BaseGHLClient) {
       });
     },
 
-    async updateCustomValue(valueId: string, data: { name?: string; value?: string }, locationId?: string) {
+    async updateCustomValue(valueId: string, data: any, locationId?: string) {
       const locId = locationId || client.locationId;
       return client.request<{ customValue: any }>("PUT", `/locations/${locId}/customValues/${valueId}`, {
         body: data,
@@ -158,6 +191,8 @@ export function locationMethods(client: BaseGHLClient) {
       });
     },
 
+    // ========== BUSINESS PROFILE ==========
+
     async getBusinessProfile(businessId: string) {
       return client.request<{ business: any }>("GET", `/businesses/${businessId}`, {
         version: "2021-07-28",
@@ -171,12 +206,28 @@ export function locationMethods(client: BaseGHLClient) {
       });
     },
 
+    async getLocationBusiness(locationId?: string) {
+      const locId = locationId || client.locationId;
+      return client.request<any>("GET", `/locations/${locId}/business`, {
+        version: "2021-07-28",
+      });
+    },
+
+    async updateLocationBusiness(locationId: string, data: any) {
+      return client.request<any>("PUT", `/locations/${locationId}/business`, {
+        body: data,
+        version: "2021-07-28",
+      });
+    },
+
     async listBusinesses(locationId?: string) {
       return client.request<{ businesses: any[] }>("GET", `/businesses/`, {
         query: { locationId: locationId || client.locationId },
         version: "2021-07-28",
       });
     },
+
+    // ========== USERS ==========
 
     async listUsers(locationId?: string) {
       return client.request<{ users: any[] }>("GET", `/users/`, {
@@ -193,7 +244,7 @@ export function locationMethods(client: BaseGHLClient) {
 
     async createUser(data: any) {
       return client.request<any>("POST", `/users/`, {
-        body: { ...data, companyId: data.companyId || client.apiKey },
+        body: data,
         version: "2021-07-28",
       });
     },
@@ -207,6 +258,89 @@ export function locationMethods(client: BaseGHLClient) {
 
     async deleteUser(userId: string) {
       return client.request<any>("DELETE", `/users/${userId}`, {
+        version: "2021-07-28",
+      });
+    },
+
+    async searchUsers(companyId: string, opts?: { query?: string; role?: string; locationId?: string }) {
+      const q: Record<string, string> = { companyId };
+      if (opts?.query) q.query = opts.query;
+      if (opts?.role) q.role = opts.role;
+      if (opts?.locationId) q.locationId = opts.locationId;
+      return client.request<{ users: any[] }>("GET", `/users/search`, {
+        query: q,
+        version: "2021-07-28",
+      });
+    },
+
+    // ========== CUSTOM FIELD FOLDERS (V2) ==========
+
+    async createCustomFieldFolder(data: any) {
+      return client.request<any>("POST", `/custom-fields/folders/`, {
+        body: { ...data, locationId: data.locationId || client.locationId },
+        version: "2021-07-28",
+      });
+    },
+
+    async updateCustomFieldFolder(folderId: string, data: any) {
+      return client.request<any>("PUT", `/custom-fields/folders/${folderId}`, {
+        body: data,
+        version: "2021-07-28",
+      });
+    },
+
+    async deleteCustomFieldFolder(folderId: string) {
+      return client.request<any>("DELETE", `/custom-fields/folders/${folderId}`, {
+        version: "2021-07-28",
+      });
+    },
+
+    // ========== RECURRING TASKS ==========
+
+    async createRecurringTask(locationId: string, data: any) {
+      return client.request<any>("POST", `/locations/${locationId}/tasks/recurring`, {
+        body: data,
+        version: "2021-07-28",
+      });
+    },
+
+    async getRecurringTask(locationId: string, taskId: string) {
+      return client.request<any>("GET", `/locations/${locationId}/tasks/recurring/${taskId}`, {
+        version: "2021-07-28",
+      });
+    },
+
+    async updateRecurringTask(locationId: string, taskId: string, data: any) {
+      return client.request<any>("PUT", `/locations/${locationId}/tasks/recurring/${taskId}`, {
+        body: data,
+        version: "2021-07-28",
+      });
+    },
+
+    async deleteRecurringTask(locationId: string, taskId: string) {
+      return client.request<any>("DELETE", `/locations/${locationId}/tasks/recurring/${taskId}`, {
+        version: "2021-07-28",
+      });
+    },
+
+    // ========== OTHER ==========
+
+    async uploadCustomFieldFile(locationId: string, data: any) {
+      return client.request<any>("POST", `/locations/${locationId}/customFields/upload`, {
+        body: data,
+        version: "2021-07-28",
+      });
+    },
+
+    async filterUsersByEmail(data: any) {
+      return client.request<any>("POST", `/users/search/filter-by-email`, {
+        body: data,
+        version: "2021-07-28",
+      });
+    },
+
+    async listLocationTemplates(locationId: string) {
+      return client.request<any>("GET", `/locations/${locationId}/templates`, {
         version: "2021-07-28",
       });
     },

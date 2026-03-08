@@ -157,4 +157,298 @@ For Email: type="Email", contactId, emailFrom, emailTo, subject, html or message
       }
     }
   );
+
+  // ========== UPDATE CONVERSATION ==========
+
+  server.tool(
+    "ghl_update_conversation",
+    "Update a conversation (e.g. mark as read, starred, assign user).",
+    {
+      conversationId: z.string().describe("Conversation ID"),
+      starred: z.boolean().optional().describe("Star/unstar the conversation"),
+      unreadCount: z.number().optional().describe("Set unread count (0 to mark as read)"),
+      assignedTo: z.string().optional().describe("Assign to user ID"),
+    },
+    async ({ conversationId, ...data }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.conversations.updateConversation(conversationId, data);
+        return ok(`Conversation updated!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  // ========== OUTBOUND CALL ==========
+
+  server.tool(
+    "ghl_add_outbound_call",
+    "Initiate an outbound call via conversations.",
+    {
+      type: z.string().optional().describe("Message type (e.g. Call)"),
+      contactId: z.string().describe("Contact ID to call"),
+      phone: z.string().optional().describe("Phone number to call"),
+      locationId: z.string().optional().describe("Target location"),
+    },
+    async (args) => {
+      try {
+        const client = await resolveClient(env, args.locationId);
+        const result = await client.conversations.addOutboundCall(args);
+        return ok(`Outbound call initiated!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  // ========== UPLOAD MESSAGE ATTACHMENT ==========
+
+  server.tool(
+    "ghl_upload_message_attachment",
+    "Upload an attachment for a conversation message.",
+    {
+      conversationId: z.string().describe("Conversation ID"),
+      locationId: z.string().optional().describe("Target location"),
+      attachmentUrl: z.string().describe("URL of the attachment to upload"),
+    },
+    async (args) => {
+      try {
+        const client = await resolveClient(env, args.locationId);
+        const result = await client.conversations.uploadMessageAttachment(args);
+        return ok(`Attachment uploaded!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  // ========== TRANSCRIPTION ==========
+
+  server.tool(
+    "ghl_get_transcription",
+    "Get the transcription for a voice message.",
+    {
+      locationId: z.string().describe("Location ID"),
+      messageId: z.string().describe("Message ID"),
+    },
+    async ({ locationId, messageId }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        const result = await client.conversations.getTranscription(locationId, messageId);
+        return ok(JSON.stringify(result, null, 2));
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_download_transcription",
+    "Download the transcription file for a voice message.",
+    {
+      locationId: z.string().describe("Location ID"),
+      messageId: z.string().describe("Message ID"),
+    },
+    async ({ locationId, messageId }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        const result = await client.conversations.downloadTranscription(locationId, messageId);
+        return ok(JSON.stringify(result, null, 2));
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  // ========== RECORDING ==========
+
+  server.tool(
+    "ghl_get_recording",
+    "Get the recording for a voice message.",
+    {
+      locationId: z.string().describe("Location ID"),
+      messageId: z.string().describe("Message ID"),
+    },
+    async ({ locationId, messageId }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        const result = await client.conversations.getRecording(locationId, messageId);
+        return ok(JSON.stringify(result, null, 2));
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  // ========== CANCEL SCHEDULED EMAIL ==========
+
+  server.tool(
+    "ghl_cancel_scheduled_email",
+    "Cancel a specific scheduled email by message ID.",
+    { emailMessageId: z.string().describe("Email message ID") },
+    async ({ emailMessageId }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.conversations.cancelScheduledEmail(emailMessageId);
+        return ok(`Scheduled email cancelled.\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  // ========== TYPING INDICATOR ==========
+
+  server.tool(
+    "ghl_send_typing_indicator",
+    "Send a typing indicator in a live chat conversation.",
+    {
+      conversationId: z.string().describe("Conversation ID"),
+      locationId: z.string().optional().describe("Target location"),
+      isTyping: z.boolean().optional().describe("Whether typing is active"),
+    },
+    async (args) => {
+      try {
+        const client = await resolveClient(env, args.locationId);
+        const result = await client.conversations.sendTypingIndicator(args);
+        return ok(`Typing indicator sent.\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  // ========== DELETE CONVERSATION ==========
+
+  server.tool(
+    "ghl_delete_conversation",
+    "Delete a conversation by ID.",
+    { conversationId: z.string().describe("Conversation ID to delete") },
+    async ({ conversationId }) => {
+      try {
+        const client = await resolveClient(env);
+        await client.conversations.deleteConversation(conversationId);
+        return ok(`Conversation ${conversationId} deleted.`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  // ========== EMAIL MESSAGES ==========
+
+  server.tool(
+    "ghl_get_email_message",
+    "Get a specific email message by ID.",
+    { emailMessageId: z.string().describe("Email message ID") },
+    async ({ emailMessageId }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.conversations.getEmailMessage(emailMessageId);
+        return ok(JSON.stringify(result, null, 2));
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_delete_email_message",
+    "Delete a specific email message by ID.",
+    { emailMessageId: z.string().describe("Email message ID to delete") },
+    async ({ emailMessageId }) => {
+      try {
+        const client = await resolveClient(env);
+        await client.conversations.deleteEmailMessage(emailMessageId);
+        return ok(`Email message ${emailMessageId} deleted.`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  // ========== INBOUND & MESSAGE STATUS ==========
+
+  server.tool(
+    "ghl_add_inbound_message",
+    "Add an inbound message to a conversation. Requires either conversationId or contactId.",
+    {
+      type: z.string().describe("Message type (e.g. SMS, Email, WhatsApp)"),
+      conversationId: z.string().optional().describe("Existing conversation ID"),
+      contactId: z.string().optional().describe("Contact ID (creates conversation if needed)"),
+      message: z.string().optional().describe("Message body"),
+      attachments: z.array(z.string()).optional().describe("Attachment URLs"),
+    },
+    async (args) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.conversations.addInboundMessage(args);
+        return ok(`Inbound message added!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_update_message_status",
+    "Update the status of an existing message (e.g. read, delivered, failed).",
+    {
+      messageId: z.string().describe("Message ID"),
+      status: z.string().describe("New status (read, delivered, failed, pending, etc.)"),
+      error: z.record(z.any()).optional().describe("Error details if status is failed"),
+    },
+    async ({ messageId, status, error }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.conversations.updateMessageStatus(messageId, status, error);
+        return ok(`Message status updated!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  // ========== MESSAGE ATTACHMENTS & EXPORT ==========
+
+  server.tool(
+    "ghl_add_message_attachments",
+    "Add attachment URLs to an existing message (max 5 URLs).",
+    {
+      messageId: z.string().describe("Message ID"),
+      attachmentUrls: z.array(z.string()).max(5).describe("Attachment URLs to add (max 5)"),
+    },
+    async ({ messageId, attachmentUrls }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.conversations.addMessageAttachments(messageId, attachmentUrls);
+        return ok(`Attachments added!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_export_messages",
+    "Export messages for a location with cursor-based pagination.",
+    {
+      locationId: z.string().optional().describe("Location ID"),
+      lastMessageId: z.string().optional().describe("Cursor — last message ID from previous page"),
+      limit: z.string().optional().describe("Number of messages to return"),
+    },
+    async ({ locationId, lastMessageId, limit }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        const result = await client.conversations.exportMessages(
+          locationId || client.locationId,
+          { lastMessageId, limit }
+        );
+        return ok(JSON.stringify(result, null, 2));
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
 }

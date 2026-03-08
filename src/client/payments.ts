@@ -2,6 +2,8 @@ import { BaseGHLClient } from "./base";
 
 export function paymentMethods(client: BaseGHLClient) {
   return {
+    // ========== INVOICES ==========
+
     async listInvoices(opts: {
       locationId?: string;
       status?: string;
@@ -78,6 +80,85 @@ export function paymentMethods(client: BaseGHLClient) {
       });
     },
 
+    async recordInvoicePayment(invoiceId: string, data: any) {
+      return client.request<any>("POST", `/invoices/${invoiceId}/record-payment`, {
+        body: data,
+        version: "2021-07-28",
+      });
+    },
+
+    async generateInvoiceNumber(locationId?: string) {
+      return client.request<any>("GET", `/invoices/generate-invoice-number`, {
+        query: { altId: locationId || client.locationId, altType: "location" },
+        version: "2021-07-28",
+      });
+    },
+
+    // ========== ESTIMATES ==========
+
+    async createEstimate(data: any) {
+      return client.request<any>("POST", `/invoices/estimate`, {
+        body: { ...data, altId: data.altId || client.locationId, altType: "location" },
+        version: "2021-07-28",
+      });
+    },
+
+    async listEstimates(locationId?: string, opts?: { limit?: number; offset?: number }) {
+      const q: Record<string, string> = {
+        altId: locationId || client.locationId,
+        altType: "location",
+      };
+      if (opts?.limit) q.limit = String(opts.limit);
+      if (opts?.offset) q.offset = String(opts.offset);
+      return client.request<any>("GET", `/invoices/estimate`, {
+        query: q,
+        version: "2021-07-28",
+      });
+    },
+
+    async sendEstimate(estimateId: string, body: any) {
+      return client.request<any>("POST", `/invoices/estimate/${estimateId}/send`, {
+        body,
+        version: "2021-07-28",
+      });
+    },
+
+    // ========== INVOICE SCHEDULES ==========
+
+    async listInvoiceSchedules(locationId?: string) {
+      return client.request<any>("GET", `/invoices/schedule`, {
+        query: { altId: locationId || client.locationId, altType: "location" },
+        version: "2021-07-28",
+      });
+    },
+
+    async createInvoiceSchedule(data: any) {
+      return client.request<any>("POST", `/invoices/schedule`, {
+        body: { ...data, altId: data.altId || client.locationId, altType: "location" },
+        version: "2021-07-28",
+      });
+    },
+
+    // ========== INVOICE TEMPLATES ==========
+
+    async listInvoiceTemplates(locationId?: string) {
+      return client.request<any>("GET", `/invoices/template`, {
+        query: { altId: locationId || client.locationId, altType: "location" },
+        version: "2021-07-28",
+      });
+    },
+
+    // ========== TEXT2PAY ==========
+
+    async createText2Pay(data: any) {
+      return client.request<any>("POST", `/invoices/text2pay`, {
+        body: { ...data, altId: data.altId || client.locationId, altType: "location" },
+        version: "2021-07-28",
+      });
+    },
+
+    // ========== ORDERS ==========
+
     async listOrders(opts: {
       locationId?: string;
       limit?: string;
@@ -110,6 +191,22 @@ export function paymentMethods(client: BaseGHLClient) {
       });
     },
 
+    async getOrderFulfillments(orderId: string, locationId?: string) {
+      return client.request<any>("GET", `/payments/orders/${orderId}/fulfillments`, {
+        query: { altId: locationId || client.locationId, altType: "location" },
+        version: "2021-07-28",
+      });
+    },
+
+    async createOrderFulfillment(orderId: string, body: any) {
+      return client.request<any>("POST", `/payments/orders/${orderId}/fulfillments`, {
+        body,
+        version: "2021-07-28",
+      });
+    },
+
+    // ========== TRANSACTIONS ==========
+
     async listTransactions(opts: {
       locationId?: string;
       limit?: string;
@@ -139,12 +236,14 @@ export function paymentMethods(client: BaseGHLClient) {
       });
     },
 
-    async getTransaction(transactionId: string, altId: string, altType: string) {
+    async getTransaction(transactionId: string, locationId?: string) {
       return client.request<any>("GET", `/payments/transactions/${transactionId}`, {
-        query: { altId, altType },
+        query: { altId: locationId || client.locationId, altType: "location" },
         version: "2021-07-28",
       });
     },
+
+    // ========== SUBSCRIPTIONS ==========
 
     async listSubscriptions(opts: {
       locationId?: string;
@@ -180,6 +279,24 @@ export function paymentMethods(client: BaseGHLClient) {
         version: "2021-07-28",
       });
     },
+
+    // ========== STORE SETTINGS ==========
+
+    async getStoreSettings(locationId?: string) {
+      return client.request<any>("GET", `/payments/custom-provider/provider`, {
+        query: { altId: locationId || client.locationId, altType: "location" },
+        version: "2021-07-28",
+      });
+    },
+
+    async updateStoreSettings(body: any) {
+      return client.request<any>("PUT", `/payments/custom-provider/provider`, {
+        body: { ...body, altId: body.altId || client.locationId, altType: "location" },
+        version: "2021-07-28",
+      });
+    },
+
+    // ========== STORE PRODUCTS ==========
 
     async listStoreProducts(locationId?: string, opts?: { limit?: string; offset?: string; search?: string }) {
       const q: Record<string, string> = { locationId: locationId || client.locationId };
@@ -218,114 +335,262 @@ export function paymentMethods(client: BaseGHLClient) {
       });
     },
 
-    async listShippingRates(shippingZoneId: string, altId: string, altType: string, params?: { limit?: string; offset?: string }) {
-      const q: Record<string, string> = { altId, altType };
-      if (params?.limit) q.limit = params.limit;
-      if (params?.offset) q.offset = params.offset;
+    // ========== SHIPPING ==========
+
+    async listShippingRates(shippingZoneId: string, locationId?: string) {
       return client.request<any>("GET", `/store/shipping-zone/${shippingZoneId}/shipping-rate`, {
-        query: q,
+        query: { altId: locationId || client.locationId, altType: "location" },
         version: "2021-07-28",
       });
     },
 
-    async getShippingRate(shippingZoneId: string, shippingRateId: string, altId: string, altType: string) {
-      return client.request<any>("GET", `/store/shipping-zone/${shippingZoneId}/shipping-rate/${shippingRateId}`, {
-        query: { altId, altType },
-        version: "2021-07-28",
-      });
-    },
-
-    async createShippingRate(shippingZoneId: string, data: any) {
-      return client.request<any>("POST", `/store/shipping-zone/${shippingZoneId}/shipping-rate`, {
-        body: data,
-        version: "2021-07-28",
-      });
-    },
-
-    async updateShippingRate(shippingZoneId: string, shippingRateId: string, data: any) {
-      return client.request<any>("PUT", `/store/shipping-zone/${shippingZoneId}/shipping-rate/${shippingRateId}`, {
-        body: data,
-        version: "2021-07-28",
-      });
-    },
-
-    async deleteShippingRate(shippingZoneId: string, shippingRateId: string, altId: string, altType: string) {
-      return client.request<any>("DELETE", `/store/shipping-zone/${shippingZoneId}/shipping-rate/${shippingRateId}`, {
-        query: { altId, altType },
-        version: "2021-07-28",
-      });
-    },
-
-    async listShippingZones(altId: string, altType: string, params?: { limit?: string; offset?: string; withShippingRate?: string }) {
-      const q: Record<string, string> = { altId, altType };
-      if (params?.limit) q.limit = params.limit;
-      if (params?.offset) q.offset = params.offset;
-      if (params?.withShippingRate) q.withShippingRate = params.withShippingRate;
+    async listShippingZones(locationId?: string) {
       return client.request<any>("GET", `/store/shipping-zone`, {
-        query: q,
-        version: "2021-07-28",
-      });
-    },
-
-    async getShippingZone(shippingZoneId: string, altId: string, altType: string) {
-      return client.request<any>("GET", `/store/shipping-zone/${shippingZoneId}`, {
-        query: { altId, altType },
+        query: { altId: locationId || client.locationId, altType: "location" },
         version: "2021-07-28",
       });
     },
 
     async createShippingZone(data: any) {
       return client.request<any>("POST", `/store/shipping-zone`, {
-        body: data,
+        body: { ...data, altId: data.altId || client.locationId, altType: "location" },
         version: "2021-07-28",
       });
     },
 
-    async updateShippingZone(shippingZoneId: string, data: any) {
-      return client.request<any>("PUT", `/store/shipping-zone/${shippingZoneId}`, {
-        body: data,
-        version: "2021-07-28",
-      });
-    },
-
-    async deleteShippingZone(shippingZoneId: string, altId: string, altType: string) {
-      return client.request<any>("DELETE", `/store/shipping-zone/${shippingZoneId}`, {
-        query: { altId, altType },
-        version: "2021-07-28",
-      });
-    },
-
-    async listShippingCarriers(altId: string, altType: string) {
+    async listShippingCarriers(locationId?: string) {
       return client.request<any>("GET", `/store/shipping-carrier`, {
-        query: { altId, altType },
-        version: "2021-07-28",
-      });
-    },
-
-    async getShippingCarrier(shippingCarrierId: string, altId: string, altType: string) {
-      return client.request<any>("GET", `/store/shipping-carrier/${shippingCarrierId}`, {
-        query: { altId, altType },
+        query: { altId: locationId || client.locationId, altType: "location" },
         version: "2021-07-28",
       });
     },
 
     async createShippingCarrier(data: any) {
       return client.request<any>("POST", `/store/shipping-carrier`, {
+        body: { ...data, altId: data.altId || client.locationId, altType: "location" },
+        version: "2021-07-28",
+      });
+    },
+
+    // ========== COUPONS ==========
+
+    async listCoupons(locationId?: string) {
+      return client.request<any>("GET", `/payments/coupons`, {
+        query: { altId: locationId || client.locationId, altType: "location" },
+        version: "2021-07-28",
+      });
+    },
+
+    async createCoupon(data: any) {
+      return client.request<any>("POST", `/payments/coupons`, {
+        body: { ...data, altId: data.altId || client.locationId, altType: "location" },
+        version: "2021-07-28",
+      });
+    },
+
+    async getCoupon(couponId: string, locationId?: string) {
+      return client.request<any>("GET", `/payments/coupons/${couponId}`, {
+        query: { altId: locationId || client.locationId, altType: "location" },
+        version: "2021-07-28",
+      });
+    },
+
+    async updateCoupon(couponId: string, data: any) {
+      return client.request<any>("PUT", `/payments/coupons/${couponId}`, {
         body: data,
         version: "2021-07-28",
       });
     },
 
-    async updateShippingCarrier(shippingCarrierId: string, data: any) {
-      return client.request<any>("PUT", `/store/shipping-carrier/${shippingCarrierId}`, {
+    async deleteCoupon(couponId: string, locationId?: string) {
+      return client.request<any>("DELETE", `/payments/coupons/${couponId}`, {
+        query: { altId: locationId || client.locationId, altType: "location" },
+        version: "2021-07-28",
+      });
+    },
+
+    // ========== INVOICE TEMPLATES (expanded) ==========
+
+    async getInvoiceTemplate(templateId: string, locationId?: string) {
+      return client.request<any>("GET", `/invoices/template/${templateId}`, {
+        query: { altId: locationId || client.locationId, altType: "location" },
+        version: "2021-07-28",
+      });
+    },
+
+    async createInvoiceTemplate(data: any) {
+      return client.request<any>("POST", `/invoices/template`, {
+        body: { ...data, altId: data.altId || client.locationId, altType: "location" },
+        version: "2021-07-28",
+      });
+    },
+
+    async updateInvoiceTemplate(templateId: string, data: any) {
+      return client.request<any>("PUT", `/invoices/template/${templateId}`, {
         body: data,
         version: "2021-07-28",
       });
     },
 
-    async deleteShippingCarrier(shippingCarrierId: string, altId: string, altType: string) {
-      return client.request<any>("DELETE", `/store/shipping-carrier/${shippingCarrierId}`, {
-        query: { altId, altType },
+    async deleteInvoiceTemplate(templateId: string, locationId?: string) {
+      return client.request<any>("DELETE", `/invoices/template/${templateId}`, {
+        query: { altId: locationId || client.locationId, altType: "location" },
+        version: "2021-07-28",
+      });
+    },
+
+    // ========== INVOICE SCHEDULES (expanded) ==========
+
+    async getInvoiceSchedule(scheduleId: string, locationId?: string) {
+      return client.request<any>("GET", `/invoices/schedule/${scheduleId}`, {
+        query: { altId: locationId || client.locationId, altType: "location" },
+        version: "2021-07-28",
+      });
+    },
+
+    async updateInvoiceSchedule(scheduleId: string, data: any) {
+      return client.request<any>("PUT", `/invoices/schedule/${scheduleId}`, {
+        body: data,
+        version: "2021-07-28",
+      });
+    },
+
+    async deleteInvoiceSchedule(scheduleId: string, locationId?: string) {
+      return client.request<any>("DELETE", `/invoices/schedule/${scheduleId}`, {
+        query: { altId: locationId || client.locationId, altType: "location" },
+        version: "2021-07-28",
+      });
+    },
+
+    async manageScheduleAutoPayment(scheduleId: string, data: any) {
+      return client.request<any>("POST", `/invoices/schedule/${scheduleId}/auto-payment`, {
+        body: data,
+        version: "2021-07-28",
+      });
+    },
+
+    async cancelScheduledInvoice(scheduleId: string, locationId?: string) {
+      return client.request<any>("POST", `/invoices/schedule/${scheduleId}/cancel`, {
+        body: { altId: locationId || client.locationId, altType: "location" },
+        version: "2021-07-28",
+      });
+    },
+
+    // ========== ESTIMATES (expanded) ==========
+
+    async updateEstimate(estimateId: string, data: any) {
+      return client.request<any>("PUT", `/invoices/estimate/${estimateId}`, {
+        body: data,
+        version: "2021-07-28",
+      });
+    },
+
+    async deleteEstimate(estimateId: string, locationId?: string) {
+      return client.request<any>("DELETE", `/invoices/estimate/${estimateId}`, {
+        query: { altId: locationId || client.locationId, altType: "location" },
+        version: "2021-07-28",
+      });
+    },
+
+    async generateEstimateNumber(locationId?: string) {
+      return client.request<any>("GET", `/invoices/estimate/generate-number`, {
+        query: { altId: locationId || client.locationId, altType: "location" },
+        version: "2021-07-28",
+      });
+    },
+
+    // ========== ESTIMATE TEMPLATES ==========
+
+    async listEstimateTemplates(locationId?: string) {
+      return client.request<any>("GET", `/payments/custom-provider/estimate-template`, {
+        query: { altId: locationId || client.locationId, altType: "location" },
+        version: "2021-07-28",
+      });
+    },
+
+    async createEstimateTemplate(data: any) {
+      return client.request<any>("POST", `/payments/custom-provider/estimate-template`, {
+        body: { ...data, altId: data.altId || client.locationId, altType: "location" },
+        version: "2021-07-28",
+      });
+    },
+
+    async updateEstimateTemplate(templateId: string, data: any) {
+      return client.request<any>("PUT", `/payments/custom-provider/estimate-template/${templateId}`, {
+        body: data,
+        version: "2021-07-28",
+      });
+    },
+
+    async deleteEstimateTemplate(templateId: string, locationId?: string) {
+      return client.request<any>("DELETE", `/payments/custom-provider/estimate-template/${templateId}`, {
+        query: { altId: locationId || client.locationId, altType: "location" },
+        version: "2021-07-28",
+      });
+    },
+
+    // ========== INVOICE TEMPLATE CONFIGS ==========
+
+    async updateTemplateLateFeesConfig(templateId: string, data: any) {
+      return client.request<any>("PATCH", `/invoices/template/${templateId}/late-fee-config`, {
+        body: data,
+        version: "2021-07-28",
+      });
+    },
+
+    async updateTemplatePaymentMethodsConfig(templateId: string, data: any) {
+      return client.request<any>("PATCH", `/invoices/template/${templateId}/payment-methods-config`, {
+        body: data,
+        version: "2021-07-28",
+      });
+    },
+
+    // ========== INVOICE LATE FEES + STATS ==========
+
+    async updateInvoiceLateFeesConfig(invoiceId: string, data: any) {
+      return client.request<any>("PATCH", `/invoices/${invoiceId}/late-fee-config`, {
+        body: data,
+        version: "2021-07-28",
+      });
+    },
+
+    async updateInvoiceLastVisited() {
+      return client.request<any>("POST", `/invoices/last-visited`, {
+        body: {},
+        version: "2021-07-28",
+      });
+    },
+
+    // ========== SCHEDULE INVOICE ==========
+
+    async scheduleInvoice(scheduleId: string, data: any) {
+      return client.request<any>("POST", `/invoices/schedule/${scheduleId}/schedule`, {
+        body: data,
+        version: "2021-07-28",
+      });
+    },
+
+    // ========== ORDER NOTES + PAYMENT ==========
+
+    async listOrderNotes(orderId: string, locationId?: string) {
+      return client.request<any>("GET", `/payments/orders/${orderId}/notes`, {
+        query: { altId: locationId || client.locationId, altType: "location" },
+        version: "2021-07-28",
+      });
+    },
+
+    async recordOrderPayment(orderId: string, data: any) {
+      return client.request<any>("POST", `/payments/orders/${orderId}/record-payment`, {
+        body: data,
+        version: "2021-07-28",
+      });
+    },
+
+    // ========== CONVERT ESTIMATE ==========
+
+    async convertEstimateToInvoice(estimateId: string) {
+      return client.request<any>("POST", `/payments/custom-provider/estimate/${estimateId}/convert-to-invoice`, {
+        body: {},
         version: "2021-07-28",
       });
     },

@@ -143,5 +143,111 @@ export function calendarMethods(client: BaseGHLClient) {
         version: "2021-04-15",
       });
     },
+
+    // ========== APPOINTMENT NOTES ==========
+
+    async getAppointmentNotes(appointmentId: string) {
+      return client.request<any>("GET", `/calendars/events/appointments/${appointmentId}/notes`, {
+        version: "2021-04-15",
+      });
+    },
+
+    async createAppointmentNote(appointmentId: string, data: any) {
+      return client.request<any>("POST", `/calendars/events/appointments/${appointmentId}/notes`, {
+        body: data,
+        version: "2021-04-15",
+      });
+    },
+
+    async updateAppointmentNote(appointmentId: string, noteId: string, data: any) {
+      return client.request<any>("PUT", `/calendars/events/appointments/${appointmentId}/notes/${noteId}`, {
+        body: data,
+        version: "2021-04-15",
+      });
+    },
+
+    async deleteAppointmentNote(appointmentId: string, noteId: string) {
+      return client.request<any>("DELETE", `/calendars/events/appointments/${appointmentId}/notes/${noteId}`, {
+        version: "2021-04-15",
+      });
+    },
+
+    // ========== CALENDAR RESOURCES ==========
+
+    async listCalendarResources(resourceType: string, locationId?: string) {
+      return client.request<any>("GET", `/calendars/resources/${resourceType}`, {
+        query: { locationId: locationId || client.locationId },
+        version: "2021-04-15",
+      });
+    },
+
+    async createCalendarResource(resourceType: string, data: any) {
+      return client.request<any>("POST", `/calendars/resources/${resourceType}`, {
+        body: data,
+        version: "2021-04-15",
+      });
+    },
+
+    async getCalendarResource(resourceType: string, id: string) {
+      return client.request<any>("GET", `/calendars/resources/${resourceType}/${id}`, {
+        version: "2021-04-15",
+      });
+    },
+
+    async updateCalendarResource(resourceType: string, id: string, data: any) {
+      return client.request<any>("PUT", `/calendars/resources/${resourceType}/${id}`, {
+        body: data,
+        version: "2021-04-15",
+      });
+    },
+
+    async deleteCalendarResource(resourceType: string, id: string) {
+      return client.request<any>("DELETE", `/calendars/resources/${resourceType}/${id}`, {
+        version: "2021-04-15",
+      });
+    },
+
+    // ========== CALENDAR NOTIFICATIONS ==========
+
+    async listCalendarNotifications(calendarId: string) {
+      return client.request<any>("GET", `/calendars/${calendarId}/notifications`, {
+        version: "2021-04-15",
+      });
+    },
+
+    async createCalendarNotification(calendarId: string, data: any) {
+      return client.request<any>("POST", `/calendars/${calendarId}/notifications`, {
+        body: data,
+        version: "2021-04-15",
+      });
+    },
+
+    async getCalendarNotification(calendarId: string, notificationId: string) {
+      return client.request<any>("GET", `/calendars/${calendarId}/notifications/${notificationId}`, {
+        version: "2021-04-15",
+      });
+    },
+
+    async updateCalendarNotification(calendarId: string, notificationId: string, data: any) {
+      return client.request<any>("PUT", `/calendars/${calendarId}/notifications/${notificationId}`, {
+        body: data,
+        version: "2021-04-15",
+      });
+    },
+
+    async deleteCalendarNotification(calendarId: string, notificationId: string) {
+      return client.request<any>("DELETE", `/calendars/${calendarId}/notifications/${notificationId}`, {
+        version: "2021-04-15",
+      });
+    },
+
+    // ========== GROUP STATUS ==========
+
+    async updateCalendarGroupStatus(groupId: string, data: any) {
+      return client.request<any>("PUT", `/calendars/groups/${groupId}/status`, {
+        body: data,
+        version: "2021-04-15",
+      });
+    },
   };
 }

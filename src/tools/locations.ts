@@ -314,16 +314,16 @@ export function registerLocationTools(server: McpServer, env: Env) {
 
   server.tool(
     "ghl_list_custom_values",
-    "List custom values.",
+    "List custom values for a location.",
     {
-      fieldId: z.string(),
+      locationId: z.string().optional(),
       limit: z.number().optional(),
       skip: z.number().optional(),
     },
-    async ({ fieldId, limit, skip }) => {
+    async ({ locationId, limit, skip }) => {
       try {
-        const client = await resolveClient(env);
-        const result = await client.locations.listCustomValues(fieldId, { limit, skip });
+        const client = await resolveClient(env, locationId);
+        const result = await client.locations.listCustomValues(locationId, { limit, skip });
         return ok(JSON.stringify(result, null, 2));
       } catch (e: any) {
         return err(e);
@@ -333,16 +333,16 @@ export function registerLocationTools(server: McpServer, env: Env) {
 
   server.tool(
     "ghl_create_custom_value",
-    "Create a custom value.",
+    "Create a custom value for a location.",
     {
-      fieldId: z.string(),
-      value: z.string(),
-      displayOrder: z.number().optional(),
+      name: z.string().describe("Custom value name"),
+      value: z.string().describe("Custom value"),
+      locationId: z.string().optional(),
     },
-    async ({ fieldId, value, displayOrder }) => {
+    async ({ name, value, locationId }) => {
       try {
-        const client = await resolveClient(env);
-        const result = await client.locations.createCustomValue(fieldId, { value, displayOrder });
+        const client = await resolveClient(env, locationId);
+        const result = await client.locations.createCustomValue({ name, value }, locationId);
         return ok(`Custom value created!\n\n${JSON.stringify(result, null, 2)}`);
       } catch (e: any) {
         return err(e);
@@ -354,14 +354,14 @@ export function registerLocationTools(server: McpServer, env: Env) {
     "ghl_update_custom_value",
     "Update a custom value.",
     {
-      fieldId: z.string(),
-      valueId: z.string(),
-      data: z.record(z.any()),
+      valueId: z.string().describe("Custom value ID"),
+      data: z.record(z.any()).describe("Updated data"),
+      locationId: z.string().optional(),
     },
-    async ({ fieldId, valueId, data }) => {
+    async ({ valueId, data, locationId }) => {
       try {
-        const client = await resolveClient(env);
-        const result = await client.locations.updateCustomValue(fieldId, valueId, data);
+        const client = await resolveClient(env, locationId);
+        const result = await client.locations.updateCustomValue(valueId, data, locationId);
         return ok(`Custom value updated!\n\n${JSON.stringify(result, null, 2)}`);
       } catch (e: any) {
         return err(e);
@@ -373,13 +373,13 @@ export function registerLocationTools(server: McpServer, env: Env) {
     "ghl_delete_custom_value",
     "Delete a custom value.",
     {
-      fieldId: z.string(),
-      valueId: z.string(),
+      valueId: z.string().describe("Custom value ID"),
+      locationId: z.string().optional(),
     },
-    async ({ fieldId, valueId }) => {
+    async ({ valueId, locationId }) => {
       try {
-        const client = await resolveClient(env);
-        await client.locations.deleteCustomValue(fieldId, valueId);
+        const client = await resolveClient(env, locationId);
+        await client.locations.deleteCustomValue(valueId, locationId);
         return ok(`Custom value ${valueId} deleted.`);
       } catch (e: any) {
         return err(e);
@@ -492,6 +492,360 @@ export function registerLocationTools(server: McpServer, env: Env) {
         const client = await resolveClient(env);
         await client.locations.deleteUser(userId);
         return ok(`User ${userId} deleted.`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  // ========== LOCATION GET / UPDATE / SEARCH ==========
+
+  server.tool(
+    "ghl_get_location",
+    "Get details for a specific location/sub-account.",
+    {
+      locationId: z.string().optional().describe("Location ID"),
+    },
+    async ({ locationId }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        const result = await client.locations.getLocation(locationId);
+        return ok(JSON.stringify(result, null, 2));
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_update_location",
+    "Update a location/sub-account.",
+    {
+      locationId: z.string().describe("Location ID"),
+      body: z.record(z.any()).describe("Updated location data"),
+    },
+    async ({ locationId, body }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        const result = await client.locations.updateLocation(locationId, body);
+        return ok(`Location updated!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_search_locations",
+    "Search locations/sub-accounts by company ID.",
+    {
+      companyId: z.string().describe("Company ID"),
+      limit: z.string().optional().describe("Max results"),
+      skip: z.string().optional().describe("Skip (offset)"),
+      order: z.string().optional().describe("Sort order"),
+      search: z.string().optional().describe("Search text"),
+    },
+    async ({ companyId, limit, skip, order, search }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.locations.searchLocations(companyId, { limit, skip, order, search });
+        const locations = result.locations || [];
+        const summary = locations.map((l: any) => ({
+          id: l.id,
+          name: l.name,
+          email: l.email,
+          phone: l.phone,
+        }));
+        return ok(`${locations.length} location(s):\n\n${JSON.stringify(summary, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  // ========== USERS (list / get) ==========
+
+  server.tool(
+    "ghl_list_users",
+    "List users for a location.",
+    {
+      locationId: z.string().optional().describe("Target location"),
+    },
+    async ({ locationId }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        const result = await client.locations.listUsers(locationId);
+        const users = result.users || [];
+        const summary = users.map((u: any) => ({
+          id: u.id,
+          name: u.name,
+          email: u.email,
+          role: u.role,
+        }));
+        return ok(`${users.length} user(s):\n\n${JSON.stringify(summary, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_get_user",
+    "Get details for a specific user.",
+    {
+      userId: z.string().describe("User ID"),
+    },
+    async ({ userId }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.locations.getUser(userId);
+        return ok(JSON.stringify(result, null, 2));
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  // ========== CUSTOM FIELD FOLDERS ==========
+
+  server.tool(
+    "ghl_create_custom_field_folder",
+    "Create a custom field folder.",
+    {
+      data: z.record(z.any()).describe("Folder data (name, objectKey, etc.)"),
+    },
+    async ({ data }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.locations.createCustomFieldFolder(data);
+        return ok(`Custom field folder created!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_update_custom_field_folder",
+    "Update a custom field folder.",
+    {
+      folderId: z.string().describe("Folder ID"),
+      data: z.record(z.any()).describe("Updated folder data"),
+    },
+    async ({ folderId, data }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.locations.updateCustomFieldFolder(folderId, data);
+        return ok(`Custom field folder updated!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_delete_custom_field_folder",
+    "Delete a custom field folder.",
+    {
+      folderId: z.string().describe("Folder ID"),
+    },
+    async ({ folderId }) => {
+      try {
+        const client = await resolveClient(env);
+        await client.locations.deleteCustomFieldFolder(folderId);
+        return ok(`Custom field folder ${folderId} deleted.`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  // ========== BUSINESS PROFILE (by ID) ==========
+
+  server.tool(
+    "ghl_get_business_profile",
+    "Get a business profile by business ID.",
+    {
+      businessId: z.string().describe("Business ID"),
+    },
+    async ({ businessId }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.locations.getBusinessProfile(businessId);
+        return ok(JSON.stringify(result, null, 2));
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_update_business_profile",
+    "Update a business profile by business ID.",
+    {
+      businessId: z.string().describe("Business ID"),
+      data: z.record(z.any()).describe("Updated business data"),
+    },
+    async ({ businessId, data }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.locations.updateBusinessProfile(businessId, data);
+        return ok(`Business profile updated!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  // ========== BUSINESSES ==========
+
+  server.tool(
+    "ghl_list_businesses",
+    "List businesses for a location.",
+    {
+      locationId: z.string().optional().describe("Target location"),
+    },
+    async ({ locationId }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        const result = await client.locations.listBusinesses(locationId);
+        const businesses = result.businesses || [];
+        const summary = businesses.map((b: any) => ({
+          id: b.id,
+          name: b.name,
+          phone: b.phone,
+          email: b.email,
+        }));
+        return ok(`${businesses.length} business(es):\n\n${JSON.stringify(summary, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  // ========== RECURRING TASKS ==========
+
+  server.tool(
+    "ghl_create_recurring_task",
+    "Create a recurring task for a location.",
+    {
+      locationId: z.string().optional().describe("Location ID"),
+      body: z.record(z.any()).describe("Recurring task data"),
+    },
+    async ({ locationId, body }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        const result = await client.locations.createRecurringTask(locationId || client.locationId, body);
+        return ok(`Recurring task created!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_get_recurring_task",
+    "Get a recurring task by ID.",
+    {
+      locationId: z.string().optional().describe("Location ID"),
+      taskId: z.string().describe("Recurring task ID"),
+    },
+    async ({ locationId, taskId }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        const result = await client.locations.getRecurringTask(locationId || client.locationId, taskId);
+        return ok(JSON.stringify(result, null, 2));
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_update_recurring_task",
+    "Update a recurring task.",
+    {
+      locationId: z.string().optional().describe("Location ID"),
+      taskId: z.string().describe("Recurring task ID"),
+      body: z.record(z.any()).describe("Updated recurring task data"),
+    },
+    async ({ locationId, taskId, body }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        const result = await client.locations.updateRecurringTask(locationId || client.locationId, taskId, body);
+        return ok(`Recurring task updated!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_delete_recurring_task",
+    "Delete a recurring task.",
+    {
+      locationId: z.string().optional().describe("Location ID"),
+      taskId: z.string().describe("Recurring task ID"),
+    },
+    async ({ locationId, taskId }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        await client.locations.deleteRecurringTask(locationId || client.locationId, taskId);
+        return ok(`Recurring task ${taskId} deleted.`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  // ========== OTHER ==========
+
+  server.tool(
+    "ghl_upload_custom_field_file",
+    "Upload a file for a location custom field.",
+    {
+      locationId: z.string().optional().describe("Location ID"),
+      body: z.record(z.any()).describe("File upload data"),
+    },
+    async ({ locationId, body }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        const result = await client.locations.uploadCustomFieldFile(locationId || client.locationId, body);
+        return ok(`Custom field file uploaded!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_filter_users_by_email",
+    "Filter/search users by email address.",
+    {
+      body: z.record(z.any()).describe("Filter data (e.g., { email: '...' })"),
+    },
+    async ({ body }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.locations.filterUsersByEmail(body);
+        return ok(JSON.stringify(result, null, 2));
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_list_location_templates",
+    "List templates for a location.",
+    {
+      locationId: z.string().optional().describe("Location ID"),
+    },
+    async ({ locationId }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        const result = await client.locations.listLocationTemplates(locationId || client.locationId);
+        return ok(JSON.stringify(result, null, 2));
       } catch (e: any) {
         return err(e);
       }

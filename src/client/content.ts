@@ -2,6 +2,8 @@ import { BaseGHLClient } from "./base";
 
 export function contentMethods(client: BaseGHLClient) {
   return {
+    // ========== BLOGS ==========
+
     async listBlogs(locationId?: string, skip?: string, limit?: string, searchTerm?: string) {
       const q: Record<string, string> = { locationId: locationId || client.locationId };
       if (skip) q.skip = skip;
@@ -38,6 +40,8 @@ export function contentMethods(client: BaseGHLClient) {
         version: "2021-07-28",
       });
     },
+
+    // ========== BLOG POSTS ==========
 
     async listBlogPosts(locationId?: string, blogId?: string, limit?: string, offset?: string, searchTerm?: string, status?: string) {
       const q: Record<string, string> = { locationId: locationId || client.locationId };
@@ -98,6 +102,8 @@ export function contentMethods(client: BaseGHLClient) {
       });
     },
 
+    // ========== MEDIA ==========
+
     async listMedia(opts?: { locationId?: string; limit?: string; offset?: string; sortBy?: string; sortOrder?: string; type?: string }) {
       const q: Record<string, string> = {
         altId: opts?.locationId || client.locationId,
@@ -121,6 +127,20 @@ export function contentMethods(client: BaseGHLClient) {
       });
     },
 
+    async uploadFile(data: any) {
+      return client.request<any>("POST", `/medias/upload-file`, {
+        body: data,
+        version: "2021-07-28",
+      });
+    },
+
+    async createFolder(data: any) {
+      return client.request<any>("POST", `/medias/create-folder`, {
+        body: data,
+        version: "2021-07-28",
+      });
+    },
+
     async deleteMedia(mediaId: string, locationId?: string) {
       return client.request<any>("DELETE", `/medias/${mediaId}`, {
         query: { altId: locationId || client.locationId, altType: "location" },
@@ -128,63 +148,65 @@ export function contentMethods(client: BaseGHLClient) {
       });
     },
 
+    async bulkDeleteMedia(data: any) {
+      return client.request<any>("POST", `/medias/bulk-delete`, {
+        body: data,
+        version: "2021-07-28",
+      });
+    },
+
+    // ========== DOCUMENTS & CONTRACTS ==========
+
     async listDocuments(locationId?: string, params?: {
-      status?: string;
-      paymentStatus?: string;
-      limit?: string;
-      skip?: string;
-      query?: string;
-      dateFrom?: string;
-      dateTo?: string;
+      status?: string; paymentStatus?: string; limit?: any; skip?: any; query?: string;
+      dateFrom?: string; dateTo?: string;
     }) {
       const q: Record<string, string> = { locationId: locationId || client.locationId };
       if (params?.status) q.status = params.status;
-      if (params?.paymentStatus) q.paymentStatus = params.paymentStatus;
-      if (params?.limit) q.limit = params.limit;
-      if (params?.skip) q.skip = params.skip;
+      if (params?.limit) q.limit = String(params.limit);
+      if (params?.skip) q.skip = String(params.skip);
       if (params?.query) q.query = params.query;
-      if (params?.dateFrom) q.dateFrom = params.dateFrom;
-      if (params?.dateTo) q.dateTo = params.dateTo;
       return client.request<any>("GET", `/proposals/document`, {
         query: q,
         version: "2021-07-28",
       });
     },
 
-    async getDocument(documentId: string) {
-      return client.request<any>("GET", `/proposals/document/${documentId}`, {
+    async listDocumentTemplates(locationId?: string, params?: {
+      type?: string; name?: string; limit?: string; skip?: string;
+    }) {
+      const q: Record<string, string> = { locationId: locationId || client.locationId };
+      if (params?.type) q.type = params.type;
+      if (params?.name) q.name = params.name;
+      if (params?.limit) q.limit = params.limit;
+      if (params?.skip) q.skip = params.skip;
+      return client.request<any>("GET", `/proposals/document/templates`, {
+        query: q,
         version: "2021-07-28",
       });
     },
 
-    async createDocument(data: any) {
-      return client.request<any>("POST", `/proposals/document`, {
-        body: { ...data, locationId: data.locationId || client.locationId },
-        version: "2021-07-28",
-      });
-    },
-
-    async updateDocument(documentId: string, data: any) {
-      return client.request<any>("PUT", `/proposals/document/${documentId}`, {
+    async sendDocument(data: any) {
+      return client.request<any>("POST", `/proposals/document/${data.documentId}/send`, {
         body: data,
         version: "2021-07-28",
       });
     },
 
-    async deleteDocument(documentId: string) {
-      return client.request<any>("DELETE", `/proposals/document/${documentId}`, {
+    async sendDocumentTemplate(data: any) {
+      return client.request<any>("POST", `/proposals/document/template`, {
+        body: data,
         version: "2021-07-28",
       });
     },
 
-    async listCustomMenus(locationId?: string, params?: { skip?: string; limit?: string; query?: string; showOnCompany?: string }) {
-      const q: Record<string, string> = {};
-      if (locationId) q.locationId = locationId;
-      else q.locationId = client.locationId;
-      if (params?.skip) q.skip = params.skip;
-      if (params?.limit) q.limit = params.limit;
+    // ========== CUSTOM MENUS ==========
+
+    async listCustomMenus(locationId?: string, params?: { skip?: any; limit?: any; query?: string }) {
+      const q: Record<string, string> = { locationId: locationId || client.locationId };
+      if (params?.skip) q.skip = String(params.skip);
+      if (params?.limit) q.limit = String(params.limit);
       if (params?.query) q.query = params.query;
-      if (params?.showOnCompany) q.showOnCompany = params.showOnCompany;
       return client.request<any>("GET", `/custom-menus/`, {
         query: q,
         version: "2021-07-28",
@@ -217,7 +239,16 @@ export function contentMethods(client: BaseGHLClient) {
       });
     },
 
+    // ========== SNAPSHOTS ==========
+
     async listSnapshots(companyId: string) {
+      return client.request<any>("GET", `/snapshots/`, {
+        query: { companyId },
+        version: "2021-07-28",
+      });
+    },
+
+    async getSnapshots(companyId: string) {
       return client.request<any>("GET", `/snapshots/`, {
         query: { companyId },
         version: "2021-07-28",
@@ -237,6 +268,30 @@ export function contentMethods(client: BaseGHLClient) {
         version: "2021-07-28",
       });
     },
+
+    async createSnapshotShareLink(companyId: string, data: any) {
+      return client.request<any>("POST", `/snapshots/share/link`, {
+        query: { companyId },
+        body: data,
+        version: "2021-07-28",
+      });
+    },
+
+    async getSnapshotPushStatus(snapshotId: string, companyId: string, from: string, to: string, lastDoc: string, limit: string) {
+      return client.request<any>("GET", `/snapshots/${snapshotId}/push`, {
+        query: { companyId, from, to, lastDoc, limit },
+        version: "2021-07-28",
+      });
+    },
+
+    async getLastSnapshotPush(snapshotId: string, locationId: string, companyId: string) {
+      return client.request<any>("GET", `/snapshots/${snapshotId}/push/last`, {
+        query: { locationId, companyId },
+        version: "2021-07-28",
+      });
+    },
+
+    // ========== TEMPLATES ==========
 
     async listTemplates(locationId?: string, opts?: { originId?: string; deleted?: string; type?: string }) {
       const locId = locationId || client.locationId;
@@ -272,6 +327,53 @@ export function contentMethods(client: BaseGHLClient) {
 
     async deleteTemplate(templateId: string) {
       return client.request<any>("DELETE", `/locations/${client.locationId}/templates/${templateId}`, {
+        version: "2021-07-28",
+      });
+    },
+
+    // ========== MEDIA EXPANDED ==========
+
+    async updateMedia(mediaId: string, data: any) {
+      return client.request<any>("POST", `/medias/${mediaId}`, {
+        body: data,
+        version: "2021-07-28",
+      });
+    },
+
+    async updateMediaFiles(data: any) {
+      return client.request<any>("PUT", `/medias/update-files`, {
+        body: data,
+        version: "2021-07-28",
+      });
+    },
+
+    // ========== BLOG URL SLUG ==========
+
+    async checkUrlSlug(locationId?: string, urlSlug?: string) {
+      const q: Record<string, string> = {};
+      if (locationId) q.locationId = locationId;
+      if (urlSlug) q.urlSlug = urlSlug;
+      return client.request<any>("GET", `/blogs/posts/url-slug-exists`, {
+        query: q,
+        version: "2021-07-28",
+      });
+    },
+
+    // ========== FUNNEL EXTRAS ==========
+
+    async getFunnelPageCount(locationId?: string, funnelId?: string) {
+      const q: Record<string, string> = {};
+      if (locationId) q.locationId = locationId;
+      if (funnelId) q.funnelId = funnelId;
+      return client.request<any>("GET", `/funnels/page/count`, {
+        query: q,
+        version: "2021-07-28",
+      });
+    },
+
+    async updateRedirect(redirectId: string, data: any) {
+      return client.request<any>("PATCH", `/funnels/lookup/redirect/${redirectId}`, {
+        body: data,
         version: "2021-07-28",
       });
     },

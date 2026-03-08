@@ -1,5 +1,21 @@
 # Copy this file to .dev.vars and fill in your values
 # These are used by `wrangler dev` for local development
 
+# Legacy / fallback credentials (sub-account scoped Private Integration token)
 GHL_API_KEY=your-ghl-private-integration-token
 GHL_LOCATION_ID=your-ghl-location-id
+
+# App 1 — Agency Private Integration
+# Scope: snapshots, companies, custom menus, users, locations, SaaS plans
+GHL_AGENCY_CLIENT_ID=your-agency-app-client-id
+GHL_AGENCY_CLIENT_SECRET=your-agency-app-client-secret
+
+# App 2 — Sub-Account Private Integration
+# Scope: contacts, conversations, calendars, payments, opportunities,
+#        products, social, marketing, funnels, blogs, custom objects,
+#        AI agents, knowledge base, etc.
+GHL_SUB_CLIENT_ID=your-sub-account-app-client-id
+GHL_SUB_CLIENT_SECRET=your-sub-account-app-client-secret
+
+# Optional: Webhook URL for error reporting
+ERROR_WEBHOOK_URL=

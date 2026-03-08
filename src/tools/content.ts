@@ -543,4 +543,251 @@ export function registerContentTools(server: McpServer, env: Env) {
     }
   );
 
+  // ========== MEDIA (missing tools for existing client methods) ==========
+
+  server.tool(
+    "ghl_list_media",
+    "List media files in the media library.",
+    {
+      locationId: z.string().optional(),
+      limit: z.string().optional(),
+      offset: z.string().optional(),
+      sortBy: z.string().optional(),
+      sortOrder: z.string().optional(),
+      type: z.string().optional(),
+    },
+    async ({ locationId, limit, offset, sortBy, sortOrder, type }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        const result = await client.content.listMedia({ locationId: locationId || client.locationId, limit, offset, sortBy, sortOrder, type });
+        return ok(JSON.stringify(result, null, 2));
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_delete_media",
+    "Delete a media file.",
+    {
+      mediaId: z.string(),
+      locationId: z.string().optional(),
+    },
+    async ({ mediaId, locationId }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        await client.content.deleteMedia(mediaId, locationId || client.locationId);
+        return ok(`Media ${mediaId} deleted.`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_update_media",
+    "Update a media file by ID.",
+    {
+      mediaId: z.string(),
+      data: z.record(z.any()),
+    },
+    async ({ mediaId, data }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.content.updateMedia(mediaId, data);
+        return ok(`Media updated!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_update_media_files",
+    "Batch update media files.",
+    {
+      data: z.record(z.any()),
+    },
+    async ({ data }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.content.updateMediaFiles(data);
+        return ok(`Media files updated!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  // ========== BLOG URL SLUG ==========
+
+  server.tool(
+    "ghl_check_url_slug",
+    "Check if a blog post URL slug already exists.",
+    {
+      locationId: z.string().optional(),
+      urlSlug: z.string().optional(),
+    },
+    async ({ locationId, urlSlug }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        const result = await client.content.checkUrlSlug(locationId || client.locationId, urlSlug);
+        return ok(JSON.stringify(result, null, 2));
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  // ========== FUNNEL EXTRAS ==========
+
+  server.tool(
+    "ghl_get_funnel_page_count",
+    "Get page count for a funnel.",
+    {
+      locationId: z.string().optional(),
+      funnelId: z.string().optional(),
+    },
+    async ({ locationId, funnelId }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        const result = await client.content.getFunnelPageCount(locationId || client.locationId, funnelId);
+        return ok(JSON.stringify(result, null, 2));
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_update_redirect",
+    "Update a funnel redirect.",
+    {
+      redirectId: z.string(),
+      data: z.record(z.any()),
+    },
+    async ({ redirectId, data }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.content.updateRedirect(redirectId, data);
+        return ok(`Redirect updated!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  // ========== TEMPLATES ==========
+
+  server.tool(
+    "ghl_list_templates",
+    "List templates for a location.",
+    {
+      locationId: z.string().optional(),
+      originId: z.string().optional(),
+      deleted: z.string().optional(),
+      type: z.string().optional(),
+    },
+    async ({ locationId, originId, deleted, type }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        const result = await client.content.listTemplates(locationId || client.locationId, { originId, deleted, type });
+        return ok(JSON.stringify(result, null, 2));
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_get_snapshot",
+    "Get a specific snapshot by ID.",
+    {
+      snapshotId: z.string().describe("Snapshot ID"),
+    },
+    async ({ snapshotId }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.content.getSnapshot(snapshotId);
+        return ok(JSON.stringify(result, null, 2));
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_get_template",
+    "Get a specific template by ID.",
+    {
+      templateId: z.string().describe("Template ID"),
+      locationId: z.string().optional().describe("Target location"),
+    },
+    async ({ templateId, locationId }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        const result = await client.content.getTemplate(templateId);
+        return ok(JSON.stringify(result, null, 2));
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_create_template",
+    "Create a new template.",
+    {
+      data: z.record(z.any()).describe("Template data"),
+      locationId: z.string().optional().describe("Target location"),
+    },
+    async ({ data, locationId }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        const result = await client.content.createTemplate(data);
+        return ok(`Template created!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_update_template",
+    "Update an existing template.",
+    {
+      templateId: z.string().describe("Template ID"),
+      data: z.record(z.any()).describe("Updated template data"),
+      locationId: z.string().optional().describe("Target location"),
+    },
+    async ({ templateId, data, locationId }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        const result = await client.content.updateTemplate(templateId, data);
+        return ok(`Template updated!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_delete_template",
+    "Delete a template by ID.",
+    {
+      templateId: z.string().describe("Template ID"),
+      locationId: z.string().optional().describe("Target location"),
+    },
+    async ({ templateId, locationId }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        await client.content.deleteTemplate(templateId);
+        return ok(`Template ${templateId} deleted.`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
 }

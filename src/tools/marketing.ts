@@ -256,11 +256,7 @@ export function registerMarketingTools(server: McpServer, env: Env) {
     async ({ locationId, postId }) => {
       try {
         const client = await resolveClient(env, locationId);
-        const result = await client.marketing.getSocialPost(
-          client.apiKey,
-          locationId || client.locationId,
-          postId
-        );
+        const result = await client.marketing.getSocialPost(locationId || client.locationId, postId);
         return ok(JSON.stringify(result, null, 2));
       } catch (e: any) {
         return err(e);
@@ -279,12 +275,7 @@ export function registerMarketingTools(server: McpServer, env: Env) {
     async ({ locationId, postId, body }) => {
       try {
         const client = await resolveClient(env, locationId);
-        const result = await client.marketing.editSocialPost(
-          client.apiKey,
-          locationId || client.locationId,
-          postId,
-          body
-        );
+        const result = await client.marketing.editSocialPost(locationId || client.locationId, postId, body);
         return ok(`Social post edited!\n\n${JSON.stringify(result, null, 2)}`);
       } catch (e: any) {
         return err(e);
@@ -301,10 +292,7 @@ export function registerMarketingTools(server: McpServer, env: Env) {
     async ({ locationId }) => {
       try {
         const client = await resolveClient(env, locationId);
-        const result = await client.marketing.getSocialCategories(
-          client.apiKey,
-          locationId || client.locationId
-        );
+        const result = await client.marketing.getSocialCategories(locationId);
         return ok(JSON.stringify(result, null, 2));
       } catch (e: any) {
         return err(e);
@@ -321,7 +309,7 @@ export function registerMarketingTools(server: McpServer, env: Env) {
     async ({ body }) => {
       try {
         const client = await resolveClient(env);
-        const result = await client.marketing.getSocialStatistics(client.apiKey, body);
+        const result = await client.marketing.getSocialStatistics(body);
         return ok(JSON.stringify(result, null, 2));
       } catch (e: any) {
         return err(e);
@@ -345,7 +333,7 @@ export function registerMarketingTools(server: McpServer, env: Env) {
     async ({ locationId, search, limit, offset }) => {
       try {
         const client = await resolveClient(env, locationId);
-        const result = await client.marketing.listEmailTemplates(client.apiKey, locationId || client.locationId, {
+        const result = await client.marketing.listEmailTemplates(locationId, {
           search,
           limit,
           offset,
@@ -370,7 +358,7 @@ export function registerMarketingTools(server: McpServer, env: Env) {
     async ({ locationId, title, type, importProvider, body }) => {
       try {
         const client = await resolveClient(env, locationId);
-        const result = await client.marketing.createEmailTemplate(client.apiKey, {
+        const result = await client.marketing.createEmailTemplate({
           title,
           type,
           importProvider,
@@ -398,7 +386,7 @@ export function registerMarketingTools(server: McpServer, env: Env) {
     async ({ locationId, templateId, updatedBy, html, editorType, dnd }) => {
       try {
         const client = await resolveClient(env, locationId);
-        const result = await client.marketing.updateEmailTemplate(client.apiKey, {
+        const result = await client.marketing.updateEmailTemplate({
           templateId,
           updatedBy,
           html,
@@ -423,7 +411,7 @@ export function registerMarketingTools(server: McpServer, env: Env) {
     async ({ locationId, templateId }) => {
       try {
         const client = await resolveClient(env, locationId);
-        await client.marketing.deleteEmailTemplate(client.apiKey, locationId || client.locationId, templateId);
+        await client.marketing.deleteEmailTemplate(locationId || client.locationId, templateId);
         return ok(`Email template ${templateId} deleted.`);
       } catch (e: any) {
         return err(e);
@@ -444,7 +432,7 @@ export function registerMarketingTools(server: McpServer, env: Env) {
     async ({ locationId, status, name, limit, offset }) => {
       try {
         const client = await resolveClient(env, locationId);
-        const result = await client.marketing.listEmailCampaigns(client.apiKey, locationId || client.locationId, {
+        const result = await client.marketing.listEmailCampaigns(locationId, {
           status,
           name,
           limit,
@@ -467,10 +455,108 @@ export function registerMarketingTools(server: McpServer, env: Env) {
     async ({ locationId, email }) => {
       try {
         const client = await resolveClient(env, locationId);
-        const result = await client.marketing.verifyEmail(client.apiKey, locationId || client.locationId, {
+        const result = await client.marketing.verifyEmail(locationId, {
           email,
         });
         return ok(JSON.stringify(result, null, 2));
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  // ==========================================================
+  // EMAILS / EMAIL BUILDER (individual)
+  // ==========================================================
+
+  server.tool(
+    "ghl_list_emails",
+    "List email builder emails for a location.",
+    {
+      locationId: z.string().optional().describe("Target location"),
+      limit: z.string().optional().describe("Max results"),
+      offset: z.string().optional().describe("Offset"),
+      search: z.string().optional().describe("Search text"),
+      sortByDate: z.string().optional().describe("Sort by date"),
+      archived: z.string().optional().describe("Filter archived"),
+      builderVersion: z.string().optional().describe("Builder version filter"),
+    },
+    async ({ locationId, limit, offset, search, sortByDate, archived, builderVersion }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        const result = await client.marketing.listEmails(locationId, { limit, offset, search, sortByDate, archived, builderVersion });
+        return ok(JSON.stringify(result, null, 2));
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_get_email",
+    "Get a specific email by ID.",
+    {
+      emailId: z.string().describe("Email ID"),
+    },
+    async ({ emailId }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.marketing.getEmail(emailId);
+        return ok(JSON.stringify(result, null, 2));
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_create_email",
+    "Create a new email in the email builder.",
+    {
+      data: z.record(z.any()).describe("Email data"),
+      locationId: z.string().optional().describe("Target location"),
+    },
+    async ({ data, locationId }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        const result = await client.marketing.createEmail({ ...data, locationId });
+        return ok(`Email created!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_update_email",
+    "Update an existing email in the email builder.",
+    {
+      data: z.record(z.any()).describe("Updated email data"),
+      locationId: z.string().optional().describe("Target location"),
+    },
+    async ({ data, locationId }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        const result = await client.marketing.updateEmail({ ...data, locationId });
+        return ok(`Email updated!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_delete_email",
+    "Delete an email from the email builder.",
+    {
+      locationId: z.string().describe("Location ID"),
+      templateId: z.string().describe("Email template ID to delete"),
+    },
+    async ({ locationId, templateId }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        await client.marketing.deleteEmail(locationId, templateId);
+        return ok(`Email ${templateId} deleted.`);
       } catch (e: any) {
         return err(e);
       }
@@ -482,6 +568,59 @@ export function registerMarketingTools(server: McpServer, env: Env) {
   // ==========================================================
 
   server.tool(
+    "ghl_create_campaign",
+    "Create a new campaign.",
+    {
+      data: z.record(z.any()).describe("Campaign data"),
+      locationId: z.string().optional().describe("Target location"),
+    },
+    async ({ data, locationId }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        const result = await client.marketing.createCampaign({ ...data, locationId });
+        return ok(`Campaign created!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_update_campaign",
+    "Update an existing campaign.",
+    {
+      campaignId: z.string().describe("Campaign ID"),
+      data: z.record(z.any()).describe("Updated campaign data"),
+    },
+    async ({ campaignId, data }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.marketing.updateCampaign(campaignId, data);
+        return ok(`Campaign updated!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_get_campaign",
+    "Get a specific campaign by ID.",
+    {
+      campaignId: z.string().describe("Campaign ID"),
+    },
+    async ({ campaignId }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.marketing.getCampaign(campaignId);
+        return ok(JSON.stringify(result, null, 2));
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
     "ghl_get_campaigns",
     "List campaigns for a location.",
     {
@@ -490,7 +629,7 @@ export function registerMarketingTools(server: McpServer, env: Env) {
     async ({ locationId }) => {
       try {
         const client = await resolveClient(env, locationId);
-        const result = await client.marketing.getCampaigns(client.apiKey, locationId || client.locationId);
+        const result = await client.marketing.getCampaigns(locationId);
         return ok(JSON.stringify(result, null, 2));
       } catch (e: any) {
         return err(e);
@@ -508,7 +647,7 @@ export function registerMarketingTools(server: McpServer, env: Env) {
     async ({ contactId, campaignId }) => {
       try {
         const client = await resolveClient(env);
-        const result = await client.marketing.addContactToCampaign(client.apiKey, contactId, campaignId);
+        const result = await client.marketing.addContactToCampaign(contactId, campaignId);
         return ok(`Contact added to campaign!\n\n${JSON.stringify(result, null, 2)}`);
       } catch (e: any) {
         return err(e);
@@ -526,7 +665,7 @@ export function registerMarketingTools(server: McpServer, env: Env) {
     async ({ contactId, campaignId }) => {
       try {
         const client = await resolveClient(env);
-        await client.marketing.removeContactFromCampaign(client.apiKey, contactId, campaignId);
+        await client.marketing.removeContactFromCampaign(contactId, campaignId);
         return ok(`Contact removed from campaign.`);
       } catch (e: any) {
         return err(e);
@@ -543,8 +682,397 @@ export function registerMarketingTools(server: McpServer, env: Env) {
     async ({ contactId }) => {
       try {
         const client = await resolveClient(env);
-        await client.marketing.removeContactFromAllCampaigns(client.apiKey, contactId);
+        await client.marketing.removeContactFromAllCampaigns(contactId);
         return ok(`Contact removed from all campaigns.`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  // ==========================================================
+  // TRIGGER LINKS (expanded)
+  // ==========================================================
+
+  server.tool(
+    "ghl_get_link",
+    "Get a specific link/trigger link by ID.",
+    {
+      linkId: z.string().describe("Link ID"),
+    },
+    async ({ linkId }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.marketing.getLinkById(linkId);
+        return ok(JSON.stringify(result, null, 2));
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  // ==========================================================
+  // SOCIAL MEDIA CSV
+  // ==========================================================
+
+  server.tool(
+    "ghl_upload_social_csv",
+    "Upload a CSV file for social media posting.",
+    {
+      locationId: z.string().describe("Location ID"),
+      body: z.record(z.any()).describe("CSV upload data"),
+    },
+    async ({ locationId, body }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        const result = await client.marketing.uploadSocialCSV(locationId, body);
+        return ok(`Social CSV uploaded!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_get_social_csv_status",
+    "Get the status of a social media CSV upload.",
+    {
+      locationId: z.string().describe("Location ID"),
+      csvId: z.string().describe("CSV upload ID"),
+    },
+    async ({ locationId, csvId }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        const result = await client.marketing.getSocialCSVStatus(locationId, csvId);
+        return ok(JSON.stringify(result, null, 2));
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_delete_social_csv",
+    "Delete a social media CSV upload.",
+    {
+      locationId: z.string().describe("Location ID"),
+      csvId: z.string().describe("CSV upload ID"),
+    },
+    async ({ locationId, csvId }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        await client.marketing.deleteSocialCSV(locationId, csvId);
+        return ok(`Social CSV ${csvId} deleted.`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  // ==========================================================
+  // SOCIAL MEDIA TAGS
+  // ==========================================================
+
+  server.tool(
+    "ghl_list_social_tags",
+    "List social media tags for a location.",
+    {
+      locationId: z.string().optional().describe("Target location"),
+    },
+    async ({ locationId }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        const result = await client.marketing.listSocialTags(locationId);
+        return ok(JSON.stringify(result, null, 2));
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  // ==========================================================
+  // SOCIAL BULK DELETE
+  // ==========================================================
+
+  server.tool(
+    "ghl_bulk_delete_social_posts",
+    "Bulk delete social media posts.",
+    {
+      locationId: z.string().describe("Location ID"),
+      body: z.record(z.any()).describe("Object with postIds array to delete"),
+    },
+    async ({ locationId, body }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        const result = await client.marketing.bulkDeleteSocialPosts(locationId, body);
+        return ok(`Social posts bulk deleted!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  // ==========================================================
+  // SOCIAL ACCOUNT MANAGEMENT
+  // ==========================================================
+
+  server.tool(
+    "ghl_delete_social_account",
+    "Delete a connected social media account.",
+    {
+      locationId: z.string().describe("Location ID"),
+      accountId: z.string().describe("Social account ID"),
+    },
+    async ({ locationId, accountId }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        await client.marketing.deleteSocialAccount(locationId, accountId);
+        return ok(`Social account ${accountId} deleted.`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  // ==========================================================
+  // LINK SEARCH
+  // ==========================================================
+
+  server.tool(
+    "ghl_search_links",
+    "Search links with query and pagination.",
+    {
+      locationId: z.string().optional().describe("Target location"),
+      query: z.string().optional().describe("Search query"),
+      page: z.string().optional().describe("Page number"),
+      limit: z.string().optional().describe("Max results per page"),
+    },
+    async ({ locationId, query, page, limit }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        const result = await client.marketing.searchLinks({ locationId, query, page, limit });
+        return ok(JSON.stringify(result, null, 2));
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  // ==========================================================
+  // EMAIL SCHEDULE
+  // ==========================================================
+
+  server.tool(
+    "ghl_get_email_schedule",
+    "Get the email sending schedule.",
+    {},
+    async () => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.marketing.getEmailSchedule();
+        return ok(JSON.stringify(result, null, 2));
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  // ==========================================================
+  // SOCIAL MEDIA OAUTH START FLOWS
+  // ==========================================================
+
+  server.tool(
+    "ghl_start_facebook_oauth",
+    "Start Facebook OAuth flow. Returns a redirect URL for OAuth authorization.",
+    {
+      locationId: z.string().describe("Location ID"),
+      userId: z.string().describe("User ID"),
+      page: z.string().optional().describe("Page parameter"),
+      reconnect: z.string().optional().describe("Reconnect flag ('true' or 'false')"),
+    },
+    async ({ locationId, userId, page, reconnect }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        const result = await client.marketing.startFacebookOAuth(locationId, userId, page, reconnect);
+        return ok(JSON.stringify(result, null, 2));
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_start_google_oauth",
+    "Start Google OAuth flow. Returns a redirect URL for OAuth authorization.",
+    {
+      locationId: z.string().describe("Location ID"),
+      userId: z.string().describe("User ID"),
+      page: z.string().optional().describe("Page parameter"),
+      reconnect: z.string().optional().describe("Reconnect flag ('true' or 'false')"),
+    },
+    async ({ locationId, userId, page, reconnect }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        const result = await client.marketing.startGoogleOAuth(locationId, userId, page, reconnect);
+        return ok(JSON.stringify(result, null, 2));
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_start_instagram_oauth",
+    "Start Instagram OAuth flow. Returns a redirect URL for OAuth authorization.",
+    {
+      locationId: z.string().describe("Location ID"),
+      userId: z.string().describe("User ID"),
+      page: z.string().optional().describe("Page parameter"),
+      reconnect: z.string().optional().describe("Reconnect flag ('true' or 'false')"),
+    },
+    async ({ locationId, userId, page, reconnect }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        const result = await client.marketing.startInstagramOAuth(locationId, userId, page, reconnect);
+        return ok(JSON.stringify(result, null, 2));
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_start_linkedin_oauth",
+    "Start LinkedIn OAuth flow. Returns a redirect URL for OAuth authorization.",
+    {
+      locationId: z.string().describe("Location ID"),
+      userId: z.string().describe("User ID"),
+      page: z.string().optional().describe("Page parameter"),
+      reconnect: z.string().optional().describe("Reconnect flag ('true' or 'false')"),
+    },
+    async ({ locationId, userId, page, reconnect }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        const result = await client.marketing.startLinkedInOAuth(locationId, userId, page, reconnect);
+        return ok(JSON.stringify(result, null, 2));
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_start_tiktok_oauth",
+    "Start TikTok OAuth flow. Returns a redirect URL for OAuth authorization.",
+    {
+      locationId: z.string().describe("Location ID"),
+      userId: z.string().describe("User ID"),
+      page: z.string().optional().describe("Page parameter"),
+      reconnect: z.string().optional().describe("Reconnect flag ('true' or 'false')"),
+    },
+    async ({ locationId, userId, page, reconnect }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        const result = await client.marketing.startTikTokOAuth(locationId, userId, page, reconnect);
+        return ok(JSON.stringify(result, null, 2));
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_start_tiktok_business_oauth",
+    "Start TikTok Business OAuth flow. Returns a redirect URL for OAuth authorization.",
+    {
+      locationId: z.string().describe("Location ID"),
+      userId: z.string().describe("User ID"),
+      page: z.string().optional().describe("Page parameter"),
+      reconnect: z.string().optional().describe("Reconnect flag ('true' or 'false')"),
+    },
+    async ({ locationId, userId, page, reconnect }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        const result = await client.marketing.startTikTokBusinessOAuth(locationId, userId, page, reconnect);
+        return ok(JSON.stringify(result, null, 2));
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_start_twitter_oauth",
+    "Start Twitter/X OAuth flow. Returns a redirect URL for OAuth authorization.",
+    {
+      locationId: z.string().describe("Location ID"),
+      userId: z.string().describe("User ID"),
+      page: z.string().optional().describe("Page parameter"),
+      reconnect: z.string().optional().describe("Reconnect flag ('true' or 'false')"),
+    },
+    async ({ locationId, userId, page, reconnect }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        const result = await client.marketing.startTwitterOAuth(locationId, userId, page, reconnect);
+        return ok(JSON.stringify(result, null, 2));
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  // ==========================================================
+  // SOCIAL ACCOUNT OPERATIONS
+  // ==========================================================
+
+  server.tool(
+    "ghl_attach_social_account",
+    "Attach a social media account to a location.",
+    {
+      locationId: z.string().describe("Location ID"),
+      body: z.record(z.any()).describe("Account attach data"),
+    },
+    async ({ locationId, body }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        const result = await client.marketing.attachSocialAccount(locationId, body);
+        return ok(`Social account attached!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_detach_social_account",
+    "Detach a social media account from a location.",
+    {
+      locationId: z.string().describe("Location ID"),
+      accountId: z.string().describe("Social account ID"),
+    },
+    async ({ locationId, accountId }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        await client.marketing.detachSocialAccount(locationId, accountId);
+        return ok(`Social account ${accountId} detached.`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_get_social_account_details",
+    "Get details for a specific social media account.",
+    {
+      locationId: z.string().describe("Location ID"),
+      accountId: z.string().describe("Social account ID"),
+    },
+    async ({ locationId, accountId }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        const result = await client.marketing.getSocialAccountDetails(locationId, accountId);
+        return ok(JSON.stringify(result, null, 2));
       } catch (e: any) {
         return err(e);
       }

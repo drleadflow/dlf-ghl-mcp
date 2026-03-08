@@ -10,6 +10,10 @@ import { aiAgentMethods } from "./ai-agents";
 import { locationMethods } from "./locations";
 import { contentMethods } from "./content";
 import { miscMethods } from "./misc";
+import { businessMethods } from "./businesses";
+import { saasMethods } from "./saas";
+import { marketplaceMethods } from "./marketplace";
+import { knowledgeBaseMethods } from "./knowledge-base";
 import type { GHLClientConfig } from "../types";
 
 export class GHLClient extends BaseGHLClient {
@@ -24,6 +28,10 @@ export class GHLClient extends BaseGHLClient {
   locations: ReturnType<typeof locationMethods>;
   content: ReturnType<typeof contentMethods>;
   misc: ReturnType<typeof miscMethods>;
+  businesses: ReturnType<typeof businessMethods>;
+  saas: ReturnType<typeof saasMethods>;
+  marketplace: ReturnType<typeof marketplaceMethods>;
+  knowledgeBase: ReturnType<typeof knowledgeBaseMethods>;
 
   constructor(config: GHLClientConfig) {
     super(config);
@@ -38,6 +46,10 @@ export class GHLClient extends BaseGHLClient {
     this.locations = locationMethods(this);
     this.content = contentMethods(this);
     this.misc = miscMethods(this);
+    this.businesses = businessMethods(this);
+    this.saas = saasMethods(this);
+    this.marketplace = marketplaceMethods(this);
+    this.knowledgeBase = knowledgeBaseMethods(this);
   }
 }
 
@@ -53,3 +65,7 @@ export * from "./ai-agents";
 export * from "./locations";
 export * from "./content";
 export * from "./misc";
+export * from "./businesses";
+export * from "./saas";
+export * from "./marketplace";
+export * from "./knowledge-base";

@@ -615,78 +615,6 @@ export function registerMiscTools(server: McpServer, env: Env) {
     }
   );
 
-  // ========== CONVERSATIONS ==========
-
-  server.tool(
-    "ghl_delete_conversation",
-    "Delete a conversation.",
-    {
-      conversationId: z.string(),
-    },
-    async ({ conversationId }) => {
-      try {
-        const client = await resolveClient(env);
-        await client.misc.deleteConversation(conversationId);
-        return ok(`Conversation ${conversationId} deleted.`);
-      } catch (e: any) {
-        return err(e);
-      }
-    }
-  );
-
-  server.tool(
-    "ghl_add_inbound_message",
-    "Add an inbound message to a conversation.",
-    {
-      body: z.record(z.any()),
-    },
-    async ({ body }) => {
-      try {
-        const client = await resolveClient(env);
-        const result = await client.misc.addInboundMessage(body);
-        return ok(`Message added!\n\n${JSON.stringify(result, null, 2)}`);
-      } catch (e: any) {
-        return err(e);
-      }
-    }
-  );
-
-  server.tool(
-    "ghl_get_email_message",
-    "Get an email message by ID.",
-    {
-      emailId: z.string(),
-    },
-    async ({ emailId }) => {
-      try {
-        const client = await resolveClient(env);
-        const result = await client.misc.getEmailMessage(emailId);
-        return ok(JSON.stringify(result, null, 2));
-      } catch (e: any) {
-        return err(e);
-      }
-    }
-  );
-
-  server.tool(
-    "ghl_update_message_status",
-    "Update the status of a message.",
-    {
-      messageId: z.string(),
-      body: z.record(z.any()),
-    },
-    async ({ messageId, body }) => {
-      try {
-        const client = await resolveClient(env);
-        const result = await client.misc.updateMessageStatus(messageId, body);
-        return ok(`Message status updated!\n\n${JSON.stringify(result, null, 2)}`);
-      } catch (e: any) {
-        return err(e);
-      }
-    }
-  );
-
-
   // ========== FUNNEL REDIRECTS ==========
 
   server.tool(
@@ -734,6 +662,537 @@ export function registerMiscTools(server: McpServer, env: Env) {
         const client = await resolveClient(env);
         await client.misc.deleteRedirect(redirectId);
         return ok(`Redirect ${redirectId} deleted.`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  // ========== ASSOCIATIONS EXPANDED ==========
+
+  server.tool(
+    "ghl_get_association_by_object_key",
+    "Get an association by object key.",
+    {
+      objectKey: z.string(),
+    },
+    async ({ objectKey }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.misc.getAssociationByObjectKey(objectKey);
+        return ok(JSON.stringify(result, null, 2));
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_create_relation",
+    "Create a relation between records.",
+    {
+      data: z.record(z.any()),
+    },
+    async ({ data }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.misc.createRelation(data);
+        return ok(`Relation created!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_get_relations",
+    "Get relations for a record.",
+    {
+      recordId: z.string(),
+    },
+    async ({ recordId }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.misc.getRelations(recordId);
+        return ok(JSON.stringify(result, null, 2));
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_delete_relation",
+    "Delete a relation.",
+    {
+      relationId: z.string(),
+    },
+    async ({ relationId }) => {
+      try {
+        const client = await resolveClient(env);
+        await client.misc.deleteRelation(relationId);
+        return ok(`Relation ${relationId} deleted.`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  // ========== CUSTOM OBJECTS SCHEMA ==========
+
+  server.tool(
+    "ghl_list_custom_objects",
+    "List custom objects for a location.",
+    {
+      locationId: z.string().optional(),
+    },
+    async ({ locationId }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        const result = await client.misc.listCustomObjects(locationId || client.locationId);
+        return ok(JSON.stringify(result, null, 2));
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_create_object",
+    "Create a custom object schema.",
+    {
+      data: z.record(z.any()),
+    },
+    async ({ data }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.misc.createCustomObject(data);
+        return ok(`Custom object created!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_get_object_schema",
+    "Get a custom object schema by key.",
+    {
+      key: z.string(),
+    },
+    async ({ key }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.misc.getObjectSchema(key);
+        return ok(JSON.stringify(result, null, 2));
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_update_object",
+    "Update a custom object schema.",
+    {
+      key: z.string(),
+      data: z.record(z.any()),
+    },
+    async ({ key, data }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.misc.updateObjectSchema(key, data);
+        return ok(`Custom object updated!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  // ========== PRODUCT PRICES (missing + new) ==========
+
+  server.tool(
+    "ghl_list_product_prices",
+    "List prices for a product.",
+    {
+      productId: z.string(),
+      limit: z.string().optional(),
+      offset: z.string().optional(),
+    },
+    async ({ productId, limit, offset }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.misc.listProductPrices(productId, { limit, offset });
+        return ok(JSON.stringify(result, null, 2));
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_create_product_price",
+    "Create a price for a product.",
+    {
+      productId: z.string(),
+      data: z.record(z.any()),
+    },
+    async ({ productId, data }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.misc.createProductPrice(productId, data);
+        return ok(`Product price created!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_get_product_price",
+    "Get a specific price for a product.",
+    {
+      productId: z.string(),
+      priceId: z.string(),
+    },
+    async ({ productId, priceId }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.misc.getProductPrice(productId, priceId);
+        return ok(JSON.stringify(result, null, 2));
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_update_product_price",
+    "Update a price for a product.",
+    {
+      productId: z.string(),
+      priceId: z.string(),
+      data: z.record(z.any()),
+    },
+    async ({ productId, priceId, data }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.misc.updateProductPrice(productId, priceId, data);
+        return ok(`Product price updated!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  // ========== COURSES ==========
+
+  server.tool(
+    "ghl_import_course",
+    "Import a course.",
+    {
+      data: z.record(z.any()),
+    },
+    async ({ data }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.misc.importCourse(data);
+        return ok(`Course imported!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  // ========== PRODUCT REVIEWS (expanded) ==========
+
+  server.tool(
+    "ghl_update_product_review",
+    "Update a product review.",
+    {
+      reviewId: z.string().describe("Review ID"),
+      data: z.record(z.any()).describe("Updated review data"),
+      locationId: z.string().optional().describe("Target location"),
+    },
+    async ({ reviewId, data, locationId }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        const result = await client.misc.updateProductReview(reviewId, data, locationId || client.locationId);
+        return ok(`Product review updated!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_delete_product_review",
+    "Delete a product review.",
+    {
+      reviewId: z.string().describe("Review ID"),
+      locationId: z.string().optional().describe("Target location"),
+    },
+    async ({ reviewId, locationId }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        await client.misc.deleteProductReview(reviewId, locationId || client.locationId);
+        return ok(`Product review ${reviewId} deleted.`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_bulk_update_reviews",
+    "Bulk update product reviews.",
+    {
+      data: z.record(z.any()).describe("Bulk review update data"),
+    },
+    async ({ data }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.misc.bulkUpdateReviews(data);
+        return ok(`Reviews bulk updated!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_get_review_count",
+    "Get review count for a product.",
+    {
+      productId: z.string().describe("Product ID"),
+      locationId: z.string().optional().describe("Target location"),
+    },
+    async ({ productId, locationId }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        const result = await client.misc.getReviewCount(productId, locationId || client.locationId);
+        return ok(JSON.stringify(result, null, 2));
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  // ========== PRODUCT BULK ==========
+
+  server.tool(
+    "ghl_bulk_update_products",
+    "Bulk update products.",
+    {
+      data: z.record(z.any()).describe("Bulk update data"),
+    },
+    async ({ data }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.misc.bulkUpdateProducts(data);
+        return ok(`Products bulk updated!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_bulk_edit_products",
+    "Bulk edit products.",
+    {
+      data: z.record(z.any()).describe("Bulk edit data"),
+    },
+    async ({ data }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.misc.bulkEditProducts(data);
+        return ok(`Products bulk edited!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  // ========== STORE INTEGRATION ==========
+
+  server.tool(
+    "ghl_add_product_to_store",
+    "Add a product to a store.",
+    {
+      storeId: z.string().describe("Store ID"),
+      data: z.record(z.any()).describe("Product data to add"),
+    },
+    async ({ storeId, data }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.misc.addProductToStore(storeId, data);
+        return ok(`Product added to store!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_update_product_priority",
+    "Update product priority in a store.",
+    {
+      storeId: z.string().describe("Store ID"),
+      data: z.record(z.any()).describe("Priority data"),
+    },
+    async ({ storeId, data }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.misc.updateProductPriority(storeId, data);
+        return ok(`Product priority updated!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_get_product_store_stats",
+    "Get product store statistics.",
+    {
+      storeId: z.string().describe("Store ID"),
+      locationId: z.string().optional().describe("Target location"),
+    },
+    async ({ storeId, locationId }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        const result = await client.misc.getProductStoreStats(storeId, locationId || client.locationId);
+        return ok(JSON.stringify(result, null, 2));
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  // ========== INVENTORY (update) ==========
+
+  server.tool(
+    "ghl_update_product_inventory",
+    "Update product inventory.",
+    {
+      data: z.record(z.any()).describe("Inventory update data"),
+    },
+    async ({ data }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.misc.updateProductInventory(data);
+        return ok(`Product inventory updated!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  // ========== PRODUCT PRICES (by location) ==========
+
+  server.tool(
+    "ghl_list_product_prices_by_location",
+    "List prices for a product filtered by location.",
+    {
+      productId: z.string().describe("Product ID"),
+      locationId: z.string().optional().describe("Target location"),
+    },
+    async ({ productId, locationId }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        const result = await client.misc.listProductPricesByLocation(productId, locationId || client.locationId);
+        return ok(JSON.stringify(result, null, 2));
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  // ========== BRAND BOARDS ==========
+
+  server.tool(
+    "ghl_list_brand_boards",
+    "List brand boards for a location.",
+    {
+      locationId: z.string().optional(),
+    },
+    async ({ locationId }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        const result = await client.misc.listBrandBoards(locationId || client.locationId);
+        return ok(JSON.stringify(result, null, 2));
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_create_brand_board",
+    "Create a brand board.",
+    {
+      data: z.record(z.any()),
+    },
+    async ({ data }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.misc.createBrandBoard(data);
+        return ok(`Brand board created!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_get_brand_board",
+    "Get a brand board by ID.",
+    {
+      brandBoardId: z.string(),
+      locationId: z.string().optional(),
+    },
+    async ({ brandBoardId, locationId }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        const result = await client.misc.getBrandBoard(brandBoardId, locationId || client.locationId);
+        return ok(JSON.stringify(result, null, 2));
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_update_brand_board",
+    "Update a brand board.",
+    {
+      brandBoardId: z.string(),
+      data: z.record(z.any()),
+    },
+    async ({ brandBoardId, data }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.misc.updateBrandBoard(brandBoardId, data);
+        return ok(`Brand board updated!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_delete_brand_board",
+    "Delete a brand board.",
+    {
+      brandBoardId: z.string(),
+      locationId: z.string().optional(),
+    },
+    async ({ brandBoardId, locationId }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        await client.misc.deleteBrandBoard(brandBoardId, locationId || client.locationId);
+        return ok(`Brand board ${brandBoardId} deleted.`);
       } catch (e: any) {
         return err(e);
       }

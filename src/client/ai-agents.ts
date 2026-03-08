@@ -138,5 +138,86 @@ export function aiAgentMethods(client: BaseGHLClient) {
         version: "2021-04-15",
       });
     },
+
+    // ========== CONVERSATION AI ACTIONS ==========
+
+    async createConversationAction(agentId: string, data: any) {
+      return client.request<any>("POST", `/conversation-ai/agents/${agentId}/actions`, {
+        body: data,
+        version: "2021-04-15",
+      });
+    },
+
+    async listConversationActions(agentId: string) {
+      return client.request<any>("GET", `/conversation-ai/agents/${agentId}/actions/list`, {
+        version: "2021-04-15",
+      });
+    },
+
+    async getConversationAction(agentId: string, actionId: string) {
+      return client.request<any>("GET", `/conversation-ai/agents/${agentId}/actions/${actionId}`, {
+        version: "2021-04-15",
+      });
+    },
+
+    async updateConversationAction(agentId: string, actionId: string, data: any) {
+      return client.request<any>("PUT", `/conversation-ai/agents/${agentId}/actions/${actionId}`, {
+        body: data,
+        version: "2021-04-15",
+      });
+    },
+
+    async deleteConversationAction(agentId: string, actionId: string) {
+      return client.request<any>("DELETE", `/conversation-ai/agents/${agentId}/actions/${actionId}`, {
+        version: "2021-04-15",
+      });
+    },
+
+    // ========== CONVERSATION AI FOLLOWUP SETTINGS ==========
+
+    async updateFollowupSettings(agentId: string, data: any) {
+      return client.request<any>("PATCH", `/conversation-ai/agents/${agentId}/followup-settings`, {
+        body: data,
+        version: "2021-04-15",
+      });
+    },
+
+    // ========== CONVERSATION AI GENERATIONS ==========
+
+    async getConversationGeneration(messageId: string, source?: string) {
+      const q: Record<string, string> = { messageId };
+      if (source) q.source = source;
+      return client.request<any>("GET", `/conversation-ai/generations`, {
+        query: q,
+        version: "2021-04-15",
+      });
+    },
+
+    // ========== AGENT STUDIO ==========
+
+    async listAgentStudioAgents(locationId?: string) {
+      const q: Record<string, string> = {};
+      if (locationId) q.locationId = locationId;
+      return client.request<any>("GET", `/agent-studio/public-api/agents`, {
+        query: q,
+        version: "2021-07-28",
+      });
+    },
+
+    async getAgentStudioAgent(agentId: string, locationId?: string) {
+      const q: Record<string, string> = {};
+      if (locationId) q.locationId = locationId;
+      return client.request<any>("GET", `/agent-studio/public-api/agents/${agentId}`, {
+        query: q,
+        version: "2021-07-28",
+      });
+    },
+
+    async executeAgentStudioAgent(agentId: string, data: any) {
+      return client.request<any>("POST", `/agent-studio/public-api/agents/${agentId}/execute`, {
+        body: data,
+        version: "2021-07-28",
+      });
+    },
   };
 }

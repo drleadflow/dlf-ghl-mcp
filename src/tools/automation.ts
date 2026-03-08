@@ -156,4 +156,110 @@ export function registerAutomationTools(server: McpServer, env: Env) {
       }
     }
   );
+
+  // ==========================================================
+  // WORKFLOW MANAGEMENT
+  // ==========================================================
+
+  server.tool(
+    "ghl_get_workflow",
+    "Get details for a specific workflow by ID.",
+    { workflowId: z.string().describe("Workflow ID") },
+    async ({ workflowId }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.automation.getWorkflow(workflowId);
+        return ok(JSON.stringify(result, null, 2));
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_create_workflow",
+    "Create a new automation workflow.",
+    {
+      data: z.record(z.any()).describe("Workflow data (name, triggers, actions, etc.)"),
+      locationId: z.string().optional().describe("Target location"),
+    },
+    async ({ data, locationId }) => {
+      try {
+        const client = await resolveClient(env, locationId);
+        const result = await client.automation.createWorkflow({ ...data, locationId });
+        return ok(`Workflow created!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_update_workflow",
+    "Update an existing automation workflow.",
+    {
+      workflowId: z.string().describe("Workflow ID"),
+      data: z.record(z.any()).describe("Updated workflow data"),
+    },
+    async ({ workflowId, data }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.automation.updateWorkflow(workflowId, data);
+        return ok(`Workflow updated!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_get_form",
+    "Get details for a specific form by ID.",
+    { formId: z.string().describe("Form ID") },
+    async ({ formId }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.automation.getForm(formId);
+        return ok(JSON.stringify(result, null, 2));
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  server.tool(
+    "ghl_get_survey",
+    "Get details for a specific survey by ID.",
+    { surveyId: z.string().describe("Survey ID") },
+    async ({ surveyId }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.automation.getSurvey(surveyId);
+        return ok(JSON.stringify(result, null, 2));
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
+
+  // ==========================================================
+  // FORM FILE UPLOADS
+  // ==========================================================
+
+  server.tool(
+    "ghl_upload_form_custom_files",
+    "Upload custom files for a form.",
+    {
+      data: z.record(z.any()).describe("File upload data"),
+    },
+    async ({ data }) => {
+      try {
+        const client = await resolveClient(env);
+        const result = await client.automation.uploadFormCustomFiles(data);
+        return ok(`Form files uploaded!\n\n${JSON.stringify(result, null, 2)}`);
+      } catch (e: any) {
+        return err(e);
+      }
+    }
+  );
 }
