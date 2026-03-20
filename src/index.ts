@@ -396,8 +396,15 @@ const defaultHandler = {
     return handleAdmin(request, env);
   }
 
-  // OAuth authorize — requires admin PIN, session, or valid user key (CRIT-2 fix)
+  // OAuth authorize — allow registered OAuth clients (browser redirect flow),
+  // admin PIN, admin session, or valid user key
   if (url.pathname === "/authorize") {
+    // Check if this is a registered OAuth client (browser redirect from Claude.ai etc.)
+    const clientId = url.searchParams.get("client_id");
+    const hasRegisteredClient = clientId
+      ? !!(await env.OAUTH_KV.get(`client:${clientId}`))
+      : false;
+
     const hasPin = await checkAdminPin(request, env);
     const hasSession = await (async () => {
       const cookie = request.headers.get("Cookie") ?? "";
@@ -409,10 +416,9 @@ const defaultHandler = {
         const session = JSON.parse(raw) as { valid: boolean };
         return session.valid === true;
       } catch {
-        return false; // reject legacy non-JSON sessions
+        return false;
       }
     })();
-    // Also allow if a valid active user key is present (MCP clients auto-authorize)
     const hasUserKey = await (async () => {
       const uk = request.headers.get("X-User-Key") || url.searchParams.get("user_key");
       if (!uk) return false;
@@ -421,9 +427,9 @@ const defaultHandler = {
       return !!u && u.status === "active";
     })();
 
-    if (!hasPin && !hasSession && !hasUserKey) {
+    if (!hasRegisteredClient && !hasPin && !hasSession && !hasUserKey) {
       return Response.json(
-        { error: "Unauthorized", hint: "OAuth authorize requires admin PIN header (X-Admin-Pin), active admin session, or valid user key." },
+        { error: "Unauthorized", hint: "OAuth authorize requires a registered client_id, admin PIN, admin session, or valid user key." },
         { status: 401, headers: CORS_HEADERS }
       );
     }
