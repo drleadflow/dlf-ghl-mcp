@@ -290,6 +290,13 @@ var SCOPE_CATEGORIES = {
     "ghl_get_link","ghl_create_link","ghl_update_link","ghl_delete_link","ghl_list_links","ghl_search_links",
     "ghl_create_recurring_task","ghl_update_recurring_task","ghl_delete_recurring_task","ghl_get_recurring_task","ghl_update_task_completed"
   ],
+  "Workflow Builder (BETA)": [
+    "ghl_workflow_builder_list","ghl_workflow_builder_create","ghl_workflow_builder_get","ghl_workflow_builder_update","ghl_workflow_builder_delete",
+    "ghl_workflow_builder_get_steps","ghl_workflow_builder_save_steps",
+    "ghl_workflow_builder_get_triggers","ghl_workflow_builder_create_trigger","ghl_workflow_builder_update_trigger","ghl_workflow_builder_delete_trigger",
+    "ghl_workflow_builder_publish","ghl_workflow_builder_draft",
+    "ghl_workflow_builder_create_folder","ghl_workflow_builder_clone","ghl_workflow_builder_error_count"
+  ],
   "Media": [
     "ghl_list_media","ghl_delete_media","ghl_bulk_delete_media","ghl_create_media_folder","ghl_update_media","ghl_update_media_files",
     "ghl_upload_file","ghl_upload_custom_field_file",
