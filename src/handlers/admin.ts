@@ -203,7 +203,8 @@ var SCOPE_CATEGORIES = {
     "ghl_get_opportunity","ghl_create_opportunity","ghl_update_opportunity","ghl_delete_opportunity",
     "ghl_search_opportunities","ghl_upsert_opportunity","ghl_update_opportunity_status",
     "ghl_get_pipeline","ghl_create_pipeline","ghl_update_pipeline","ghl_delete_pipeline","ghl_list_pipelines",
-    "ghl_add_opportunity_followers","ghl_remove_opportunity_followers"
+    "ghl_add_opportunity_followers","ghl_remove_opportunity_followers",
+    "ghl_get_lost_reason"
   ],
   "Calendars": [
     "ghl_get_calendar","ghl_create_calendar","ghl_update_calendar","ghl_delete_calendar","ghl_list_calendars",
@@ -215,7 +216,12 @@ var SCOPE_CATEGORIES = {
     "ghl_get_calendar_resource","ghl_create_calendar_resource","ghl_update_calendar_resource",
     "ghl_delete_calendar_resource","ghl_list_calendar_resources",
     "ghl_create_blocked_slot","ghl_update_blocked_slot","ghl_delete_blocked_slot","ghl_list_blocked_slots",
-    "ghl_create_appointment_note","ghl_update_appointment_note","ghl_delete_appointment_note","ghl_get_appointment_notes"
+    "ghl_create_appointment_note","ghl_update_appointment_note","ghl_delete_appointment_note","ghl_get_appointment_notes",
+    "ghl_create_availability_schedule","ghl_get_availability_schedule","ghl_update_availability_schedule","ghl_delete_availability_schedule","ghl_list_availability_schedules",
+    "ghl_create_calendar_schedule","ghl_get_calendar_schedule","ghl_update_calendar_schedule",
+    "ghl_add_calendar_to_schedule","ghl_remove_calendar_from_schedule",
+    "ghl_create_service","ghl_get_service","ghl_update_service","ghl_delete_service","ghl_list_services",
+    "ghl_create_service_booking","ghl_get_service_booking","ghl_update_service_booking","ghl_delete_service_booking","ghl_list_service_bookings"
   ],
   "Payments": [
     "ghl_get_invoice","ghl_create_invoice","ghl_update_invoice","ghl_delete_invoice","ghl_list_invoices",
@@ -251,9 +257,13 @@ var SCOPE_CATEGORIES = {
     "ghl_get_social_accounts","ghl_get_social_account_details","ghl_attach_social_account","ghl_detach_social_account","ghl_delete_social_account",
     "ghl_get_social_categories","ghl_get_social_statistics","ghl_list_social_tags",
     "ghl_upload_social_csv","ghl_get_social_csv_status","ghl_delete_social_csv",
+    "ghl_create_category_queue","ghl_get_category_queue","ghl_update_category_queue","ghl_list_category_queues","ghl_list_available_queue_categories",
+    "ghl_create_queue_item","ghl_update_queue_item","ghl_delete_queue_item","ghl_clone_queue_item","ghl_reset_queue_item","ghl_list_queue_items",
+    "ghl_delete_active_queue_post","ghl_get_queue_calendar","ghl_get_queue_slots",
+    "ghl_start_queue_edit_session","ghl_save_queue_edit_session","ghl_discard_queue_edit_session","ghl_get_queue_edit_calendar",
     "ghl_start_facebook_oauth","ghl_start_instagram_oauth","ghl_start_linkedin_oauth",
     "ghl_start_tiktok_oauth","ghl_start_tiktok_business_oauth","ghl_start_twitter_oauth","ghl_start_google_oauth",
-    "ghl_get_campaigns","ghl_get_campaign","ghl_create_campaign","ghl_update_campaign","ghl_list_email_campaigns",
+    "ghl_get_campaigns","ghl_get_campaign","ghl_create_campaign","ghl_update_campaign","ghl_list_email_campaigns","ghl_get_email_campaign_stats",
     "ghl_get_email","ghl_create_email","ghl_update_email","ghl_delete_email","ghl_list_emails",
     "ghl_get_email_template","ghl_create_email_template","ghl_update_email_template","ghl_delete_email_template","ghl_list_email_templates",
     "ghl_get_email_schedule","ghl_cancel_scheduled_email",
@@ -266,7 +276,7 @@ var SCOPE_CATEGORIES = {
     "ghl_search_locations","ghl_list_sub_accounts","ghl_get_location_timezones",
     "ghl_get_location_business","ghl_update_location_business",
     "ghl_get_location_custom_fields","ghl_create_location_custom_field","ghl_update_location_custom_field","ghl_delete_location_custom_field",
-    "ghl_list_location_tags","ghl_list_location_templates",
+    "ghl_list_location_tags","ghl_list_location_templates","ghl_set_default_account",
     "ghl_list_custom_fields_v2","ghl_create_custom_field","ghl_update_custom_field","ghl_delete_custom_field",
     "ghl_create_custom_field_folder","ghl_update_custom_field_folder","ghl_delete_custom_field_folder",
     "ghl_list_custom_values","ghl_create_custom_value","ghl_update_custom_value","ghl_delete_custom_value","ghl_get_custom_field",
@@ -318,6 +328,11 @@ var SCOPE_CATEGORIES = {
     "ghl_saas_get_subscription","ghl_saas_update_subscription","ghl_saas_update_rebilling",
     "ghl_marketplace_check_has_funds","ghl_marketplace_create_billing_charge","ghl_marketplace_update_billing_charge",
     "ghl_marketplace_delete_billing_charge","ghl_marketplace_get_billing_charge",
+    "ghl_marketplace_get_rebilling_config","ghl_marketplace_migrate_external_auth",
+    "ghl_saas_get_wallet_balance","ghl_saas_update_wallet_balance",
+    "ghl_create_custom_integration","ghl_delete_custom_integration",
+    "ghl_create_integration_provider","ghl_list_integration_providers",
+    "ghl_create_provider_config","ghl_get_provider_config","ghl_disconnect_provider_config",
     "ghl_marketplace_get_app_installation","ghl_marketplace_list_app_installations",
     "ghl_add_sub_account","ghl_remove_sub_account","ghl_update_sub_account_token","ghl_list_errors","ghl_clear_errors"
   ],
